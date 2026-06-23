@@ -1,11 +1,11 @@
-import { env } from "./lib/env";
-import app from "./app";
+import { env } from "../api/lib/env";
+import { app } from "../api/app";
 
 export default app;
 
 if (env.isProduction) {
   const { serve } = await import("@hono/node-server");
-  const { serveStaticFiles } = await import("./lib/vite");
+  const { serveStaticFiles } = await import("../api/lib/vite");
   serveStaticFiles(app);
 
   const port = parseInt(process.env.PORT || "3000");
