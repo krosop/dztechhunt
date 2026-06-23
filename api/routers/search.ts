@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "../middleware";
 import { getDb } from "../queries/connection";
-import { products, listings, sources, searchCache, searchLogs } from "@db/schema";
+import { products, listings, sources, searchCache, searchLogs } from "../../db/schema";
 import { eq, and, gte, sql, desc, ilike } from "drizzle-orm";
 import {
   searchStaticProducts,

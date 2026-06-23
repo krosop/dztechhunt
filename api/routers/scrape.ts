@@ -1,6 +1,6 @@
 import { createRouter, publicQuery } from "../middleware";
 import { getDb } from "../queries/connection";
-import { sources, searchLogs } from "@db/schema";
+import { sources, searchLogs } from "../../db/schema";
 import { sql } from "drizzle-orm";
 import { getSources } from "../data/staticData";
 

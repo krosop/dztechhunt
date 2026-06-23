@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "../middleware";
 import { getDb } from "../queries/connection";
-import { products, listings, sources, priceHistory } from "@db/schema";
+import { products, listings, sources, priceHistory } from "../../db/schema";
 import { eq, and, gte, sql } from "drizzle-orm";
 import {
   getStaticProductById,
