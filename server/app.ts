@@ -8,6 +8,12 @@ import { createContext } from "./context";
 export const app = new Hono<{ Bindings: HttpBindings }>();
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
+
+// Simple health check - no tRPC
+app.get("/api/health", (c) => {
+  return c.json({ status: "ok", ts: Date.now() });
+});
+
 app.use("/api/trpc/*", async (c) => {
   return fetchRequestHandler({
     endpoint: "/api/trpc",
