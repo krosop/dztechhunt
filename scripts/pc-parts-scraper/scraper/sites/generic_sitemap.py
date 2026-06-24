@@ -175,7 +175,20 @@ class GenericSiteScraper:
                 if not title_el:
                     continue
                 name = title_el.get_text(strip=True)
-                if len(name) < 3:
+                # Filter out UI text and garbage names
+                garbage_terms = [
+                    'ajouter à la comparaison', 'add to compare', 'compare',
+                    'ajouter au panier', 'add to cart', 'panier',
+                    'en savoir plus', 'read more', 'learn more',
+                    'voir détails', 'voir detail', 'details',
+                    'disponible', 'indisponible', 'en stock', 'out of stock',
+                    'nouveau', 'new', 'promo', 'solde', 'soldes',
+                    'quick view', 'aperçu rapide', 'preview',
+                ]
+                name_lower = name.lower()
+                if any(g in name_lower for g in garbage_terms):
+                    continue
+                if len(name) < 5:
                     continue
 
                 # Price
