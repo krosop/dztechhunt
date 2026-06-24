@@ -1,4 +1,4 @@
-name: Daily Scrape + Clean Pipeline
+name: Daily Scrape + Clean Pipeline (Python + Node.js)
 
 on:
   schedule:
@@ -13,40 +13,48 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ─── Node.js Setup (for cleanup + existing scripts) ───
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install dependencies
+      - name: Install Node.js dependencies
         run: npm ci
 
-      - name: Run scraper v3 (Scrapling-inspired)
-        run: node scripts/scrape-v3.cjs
+      # ─── Python Setup ───
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          cd scripts/pc-parts-scraper
+          pip install -r requirements.txt
+
+      # ─── Run Python Scraper + Adapter ───
+      - name: Run Python scraper (licbplus + wifidjelfa)
+        run: cd scripts/pc-parts-scraper && python adapter.py
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
-      - name: Run deduplication & cleaning (hybrid v1+v2)
-        run: node scripts/clean-products-hybrid.cjs
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-
+      # ─── Upload artifacts ───
       - name: Upload results artifacts
         uses: actions/upload-artifact@v4
         with:
           name: scrape-results
           path: |
-            scripts/scrape-results.json
-            scripts/clean-products.json
+            public/clean-products.json
+            scripts/pc-parts-scraper/docs/data/
           retention-days: 7
 
+      # ─── Commit updated data ───
       - name: Commit clean data to repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/clean-products.json public/scrape-data.json
-          git diff --cached --quiet || git commit -m "data: update scraped & cleaned products $(date -u +%Y-%m-%d)"
+          git add public/clean-products.json server/data/clean-products.json
+          git diff --cached --quiet || git commit -m "data: update scraped products $(date -u +%Y-%m-%d)"
           git push
 
   cleanup:
@@ -59,7 +67,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install dependencies
+      - name: Install Node.js dependencies
         run: npm ci
       - name: Run cleanup
         run: node scripts/cleanup.cjs
