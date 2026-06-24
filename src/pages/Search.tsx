@@ -54,7 +54,7 @@ export function SearchPage() {
   const { search: staticSearch, loading: staticLoading } = useStaticData();
 
   // Determine which data source to use
-  const isLoading = trpcLoading || (trpcError && staticLoading);
+  const isLoading = trpcLoading || staticLoading;
   const useStatic = trpcError || (searchData?.results?.length === 0 && query.length > 0);
 
   const staticResults = useStatic
