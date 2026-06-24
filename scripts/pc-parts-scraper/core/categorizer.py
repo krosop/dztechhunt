@@ -3,6 +3,7 @@ PC Parts Categorizer & Spec Extractor
 The brain of the scraper - takes raw product names and extracts structured data.
 """
 import re
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 # ═══════════════════════════════════════════════════════════
