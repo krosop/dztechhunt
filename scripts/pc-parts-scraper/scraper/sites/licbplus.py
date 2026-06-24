@@ -77,8 +77,8 @@ class LicbplusScraper(BaseScraper):
                 name_el = card.select_one(self.SELECTORS['name'])
                 if not name_el:
                     continue
-                # Remove stock status badge from name if present
-                for badge in name_el.select('span.stock-status'):
+                # Remove ALL inline badges from name (stock-status, spring-inline-badge, etc.)
+                for badge in name_el.find_all('span'):
                     badge.decompose()
                 name = name_el.get_text(strip=True)
 
