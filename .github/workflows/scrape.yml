@@ -10,8 +10,12 @@ jobs:
     name: Scrape Algerian PC Stores
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # ─── Node.js Setup (for cleanup + existing scripts) ───
       - uses: actions/setup-node@v4
@@ -53,6 +57,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git add public/clean-products.json server/data/clean-products.json
           git diff --cached --quiet || git commit -m "data: update scraped products $(date -u +%Y-%m-%d)"
           git push
