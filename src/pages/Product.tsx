@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getProductBySlug, getRelatedProducts } from '@/supabase/api';
+import { getProductBySlug, getRelatedProducts, subscribeToProductUpdates } from '@/supabase/api';
 import type { PriceView } from '@/supabase/types';
-import { subscribeToProductUpdates } from '@/supabase/api';
+import { useData } from '@/components/DataProvider';
 import { useTranslation } from '@/i18n/useTranslation';
 import NavigationBar from '@/components/NavigationBar';
 import ProductHero from '@/sections/ProductHero';
@@ -12,12 +12,38 @@ import RelatedProducts from '@/sections/RelatedProducts';
 export default function Product() {
   const { t, isRTL } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
-  const [entries, setEntries] = useState<PriceView[]>([]);
+  const { loading: dataLoading, allProducts } = useData();
+
+  // Try to find product from local data first (faster, no Supabase needed)
+  const localEntries = useMemo(() => {
+    if (!slug) return [];
+    return allProducts.filter(p => p.product_slug === slug);
+  }, [allProducts, slug]);
+
+  const [entries, setEntries] = useState<PriceView[]>(localEntries);
   const [related, setRelated] = useState<PriceView[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(dataLoading);
   const [error, setError] = useState<string | null>(null);
 
+  // Use local data immediately if available
   useEffect(() => {
+    if (localEntries.length > 0) {
+      setEntries(localEntries);
+      // Find related products from same category
+      const first = localEntries[0];
+      const rel = allProducts
+        .filter(p => p.category_slug === first.category_slug && p.product_id !== first.product_id)
+        .slice(0, 6);
+      setRelated(rel);
+      setLoading(false);
+      return;
+    }
+  }, [localEntries, allProducts]);
+
+  // Fall back to Supabase if local data doesn't have it
+  useEffect(() => {
+    if (localEntries.length > 0) return; // Already found locally
+
     let unsub: any = null;
     let mounted = true;
 
@@ -57,7 +83,7 @@ export default function Product() {
       mounted = false;
       if (unsub) unsub.unsubscribe();
     };
-  }, [slug, t]);
+  }, [slug, localEntries.length, t]);
 
   if (loading) {
     return (

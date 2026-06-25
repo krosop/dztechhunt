@@ -7,6 +7,7 @@ interface DataContextValue {
   loading: boolean;
   error: string | null;
   products: PriceView[];
+  allProducts: PriceView[];
   categories: CategoryStat[];
   stores: StoreRow[];
   liveDeals: PriceView[];
@@ -21,6 +22,7 @@ const DataContext = createContext<DataContextValue>({
   loading: true,
   error: null,
   products: [],
+  allProducts: [],
   categories: [],
   stores: [],
   liveDeals: [],
@@ -42,6 +44,7 @@ export default function DataProvider({ children }: { children: React.ReactNode }
   const [stores, setStores] = useState<StoreRow[]>([]);
   const [liveDeals, setLiveDeals] = useState<PriceView[]>([]);
   const [trending, setTrending] = useState<PriceView[]>([]);
+  const [allProducts, setAllProducts] = useState<PriceView[]>([]);
   const [productCount, setProductCount] = useState(0);
   const [storeCount, setStoreCount] = useState(0);
   const realtimeRef = useRef<any>(null);
@@ -102,6 +105,7 @@ export default function DataProvider({ children }: { children: React.ReactNode }
 
       setCategories(cats);
       setStores(storeEntries);
+      setAllProducts(allProducts);
       setLiveDeals(deals);
       setTrending(trend);
       setProductCount(data.products?.length || 0);
@@ -172,6 +176,7 @@ export default function DataProvider({ children }: { children: React.ReactNode }
         loading,
         error,
         products: liveDeals,
+        allProducts,
         categories,
         stores,
         liveDeals,

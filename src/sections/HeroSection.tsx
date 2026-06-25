@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, ShieldCheck, RefreshCw, Zap, ChevronDown } from 'lucide-react';
 import { useTranslation } from '@/i18n/useTranslation';
 
 export default function HeroSection() {
   const { t, isRTL } = useTranslation();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -13,6 +16,13 @@ export default function HeroSection() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -58,7 +68,7 @@ export default function HeroSection() {
           {t.hero_desc}
         </motion.p>
 
-        <motion.div variants={itemVariants} className="mt-7 sm:mt-9 max-w-[640px] mx-auto">
+        <motion.form variants={itemVariants} onSubmit={handleSearch} className="mt-7 sm:mt-9 max-w-[640px] mx-auto">
           <div className={`flex flex-col sm:flex-row items-stretch sm:items-center bg-[#131b26] border border-[#1a2332] rounded-xl transition-all duration-300 ${
               searchFocused ? 'border-[#00d4aa]/50 ring-2 ring-[#00d4aa]/10' : ''
             }`}>
@@ -66,6 +76,8 @@ export default function HeroSection() {
               <Search className="w-5 h-5 text-[#4a5568] mx-4 shrink-0" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.hero_search_placeholder}
                 className={`flex-1 h-full px-3 text-[15px] text-white placeholder:text-[#4a5568] bg-transparent outline-none min-w-0 ${isRTL ? 'text-right' : 'text-left'}`}
                 dir={isRTL ? 'rtl' : 'ltr'}
@@ -73,12 +85,12 @@ export default function HeroSection() {
                 onBlur={() => setSearchFocused(false)}
               />
             </div>
-            <button className="h-10 sm:h-[42px] mx-1.5 mb-1.5 sm:mb-0 px-5 bg-[#00d4aa] hover:bg-[#00b894] text-[#0a0e14] text-sm font-bold rounded-lg transition-colors duration-200 shrink-0">
+            <button type="submit" className="h-10 sm:h-[42px] mx-1.5 mb-1.5 sm:mb-0 px-5 bg-[#00d4aa] hover:bg-[#00b894] text-[#0a0e14] text-sm font-bold rounded-lg transition-colors duration-200 shrink-0">
               <span className="hidden sm:inline">{t.hero_search_btn}</span>
               <span className="sm:hidden">{t.hero_search_btn_sm}</span>
             </button>
           </div>
-        </motion.div>
+        </motion.form>
 
         <motion.div variants={itemVariants} className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
           <a
