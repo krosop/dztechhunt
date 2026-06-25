@@ -84,15 +84,13 @@ function convertSpecs(specs) {
   return result.length > 0 ? result : ['Produit neuf'];
 }
 
-function convertListingsToPrices(listings, product) {
+function convertListingsToPrices(listings) {
   if (!Array.isArray(listings) || listings.length === 0) return [];
-  
-  const worstPrice = product.worstPrice || 0;
   
   return listings.map((l, i) => {
     const currentPrice = l.price || 0;
-    // Use product worstPrice as "original" if higher than current
-    const originalPrice = worstPrice > currentPrice ? worstPrice : currentPrice;
+    // Use listing's own old price if available, otherwise same as current (no fake savings)
+    const originalPrice = l.old_price || l.originalPrice || currentPrice;
     const savings = originalPrice > currentPrice ? originalPrice - currentPrice : 0;
     
     return {
@@ -128,7 +126,7 @@ function convertData(input) {
   // Convert products
   const convertedProducts = products.map(p => {
     const catSlug = CATEGORY_MAP[p.category] || 'pc-parts';
-    const prices = convertListingsToPrices(p.listings || [], p);
+    const prices = convertListingsToPrices(p.listings || []);
     
     // Update colors based on assigned store colors
     prices.forEach(pr => {
