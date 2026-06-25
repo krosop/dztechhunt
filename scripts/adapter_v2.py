@@ -59,6 +59,7 @@ def convert_to_frontend(cleaned_products):
         
         products.append({
             'id': f"prd-{group_key.replace('::', '-').replace('/', '-')[:40]}-{datetime.now().strftime('%H%M')}",
+            'name': first['name'].strip(),
             'canonicalName': first['name'].strip(),
             'brand': first.get('brand') if first.get('brand') != 'Unknown' else None,
             'category': first.get('category', 'pc_part') if first.get('category') != 'unknown' else 'pc_part',
