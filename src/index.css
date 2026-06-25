@@ -43,8 +43,8 @@
 
 @layer utilities {
   .page-padding {
-    padding-left: max(24px, calc((100vw - 1280px) / 2));
-    padding-right: max(24px, calc((100vw - 1280px) / 2));
+    padding-left: max(24px, calc((100vw - 1680px) / 2));
+    padding-right: max(24px, calc((100vw - 1680px) / 2));
   }
 }
 

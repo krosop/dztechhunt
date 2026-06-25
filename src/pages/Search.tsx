@@ -107,7 +107,7 @@ export default function SearchPage() {
       <main className="pt-16">
         {/* Search Header */}
         <section className="bg-[#070a10] border-b border-[#1a2332] py-8 sm:py-10">
-          <div className="page-padding max-w-[960px] mx-auto">
+          <div className="page-padding">
             {/* Breadcrumb */}
             <div className={`flex items-center gap-1.5 text-[11px] text-[#4a5568] mb-5 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <Link to="/" className="hover:text-[#00d4aa] transition-colors">{t.breadcrumb_home}</Link>
@@ -167,7 +167,7 @@ export default function SearchPage() {
         </section>
 
         {/* Filters & Results */}
-        <section className="page-padding py-6 sm:py-8 max-w-[1200px] mx-auto">
+        <section className="page-padding py-6 sm:py-8">
           {/* Filter bar */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
             {/* Category pills */}
@@ -221,7 +221,7 @@ export default function SearchPage() {
 
           {/* Results grid */}
           {loading || !loaded ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <CardSkeleton key={i} />
               ))}
@@ -252,7 +252,7 @@ export default function SearchPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6"
             >
               {results.map((product, i) => (
                 <ProductCard key={`${product.product_id}-${i}`} product={product} index={i} />
