@@ -5,6 +5,7 @@
   "routes": [
     { "src": "/api/minimal", "dest": "/api/minimal" },
     { "src": "/api/hono", "dest": "/api/hono" },
+    { "src": "/api/hono-raw", "dest": "/api/hono-raw" },
     { "src": "/api/(.*)", "dest": "/api/index" },
     { "src": "/scrape-data.json", "dest": "/scrape-data.json" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
