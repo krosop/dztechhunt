@@ -22,7 +22,13 @@ export default function LiveDealsBanner() {
     );
   }
 
-  const allDeals = [...liveDeals, ...liveDeals, ...liveDeals, ...liveDeals];
+  // Deduplicate by product_id so each unique product appears only once
+  const uniqueDeals = liveDeals.filter((deal, index, self) =>
+    index === self.findIndex((d) => d.product_id === deal.product_id)
+  );
+
+  // Duplicate once for seamless loop (not 4x)
+  const allDeals = [...uniqueDeals, ...uniqueDeals];
 
   return (
     <section id="deals" className="bg-[#070a10] border-y border-[#1a2332] py-5 overflow-hidden">
@@ -40,7 +46,7 @@ export default function LiveDealsBanner() {
       </motion.div>
 
       <div className="relative group">
-        <div className="flex gap-3 animate-[ticker-scroll_40s_linear_infinite] group-hover:[animation-play-state:paused] w-max px-6">
+        <div className="flex gap-3 animate-[ticker-scroll_80s_linear_infinite] group-hover:[animation-play-state:paused] w-max px-6">
           {allDeals.map((deal, i) => (
             <Link
               key={`${deal.product_id}-${i}`}

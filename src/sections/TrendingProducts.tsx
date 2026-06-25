@@ -27,6 +27,11 @@ export default function TrendingProducts() {
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
+  // Deduplicate by product_id so each unique product appears only once
+  const uniqueTrending = trending.filter((item, index, self) =>
+    index === self.findIndex((t) => t.product_id === item.product_id)
+  );
+
   return (
     <section id="trending" className="bg-[#070a10] py-20 border-y border-[#1a2332]">
       <div className="page-padding">
@@ -44,7 +49,7 @@ export default function TrendingProducts() {
 
       <div className="page-padding">
         <HorizontalCarousel cardWidth={260} gap={12}>
-          {trending.map((product, i) => (
+          {uniqueTrending.map((product, i) => (
             <div key={`${product.product_id}-${i}`} className="snap-start w-[260px] sm:w-[280px] shrink-0">
               <ProductCard product={product} index={i} />
             </div>
