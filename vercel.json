@@ -2,6 +2,7 @@
   "version": 2,
   "framework": "vite",
   "outputDirectory": "dist/public",
+  "buildCommand": "vite build && node scripts/build-api.js",
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/bundle" },
     { "src": "/scrape-data.json", "dest": "/scrape-data.json" },
