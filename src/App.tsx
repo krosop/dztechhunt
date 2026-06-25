@@ -1,20 +1,15 @@
-import { Routes, Route } from "react-router";
-import { Navigation } from "@/components/Navigation";
-import { Home } from "@/pages/Home";
-import { SearchPage } from "@/pages/Search";
-import { ProductDetail } from "@/pages/ProductDetail";
+import { Routes, Route } from 'react-router-dom';
+import DataProvider from '@/components/DataProvider';
+import Home from './pages/Home';
+import Product from './pages/Product';
 
-function App() {
+export default function App() {
   return (
-    <div className="min-h-screen bg-[#050505]">
-      <Navigation />
+    <DataProvider>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/product/:slug" element={<Product />} />
       </Routes>
-    </div>
+    </DataProvider>
   );
 }
-
-export default App;

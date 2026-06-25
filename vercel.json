@@ -1,14 +1,5 @@
 {
   "version": 2,
   "framework": "vite",
-  "outputDirectory": "dist/public",
-  "buildCommand": "vite build && node scripts/build-api.js",
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/bundle" },
-    { "src": "/clean-products.json", "dest": "/clean-products.json" },
-    { "src": "/scrape-data.json", "dest": "/scrape-data.json" },
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  "buildCommand": "npm run build"
 }
-

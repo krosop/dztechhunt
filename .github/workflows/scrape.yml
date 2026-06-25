@@ -42,6 +42,10 @@ jobs:
           PYTHONIOENCODING: utf-8
         timeout-minutes: 20
 
+      # ─── Convert data for new frontend ───
+      - name: Convert data to PriceZap format
+        run: node scripts/convert-data.js
+
       # ─── Upload artifacts ───
       - name: Upload results artifacts
         uses: actions/upload-artifact@v4
@@ -49,6 +53,7 @@ jobs:
           name: scrape-results
           path: |
             public/clean-products.json
+            public/data/products.json
             scripts/pc-parts-scraper/data/raw/
           retention-days: 7
 
@@ -58,7 +63,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git add public/clean-products.json server/data/clean-products.json
+          git add public/clean-products.json public/data/products.json
           git diff --cached --quiet || git commit -m "data: update scraped products $(date -u +%Y-%m-%d)"
           git push
 
