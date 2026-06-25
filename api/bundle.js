@@ -2789,7 +2789,7 @@ var handle = (app2) => {
 var app = new Hono2();
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
 app.get("/api/health", (c) => {
-  return c.json({ ok: true, bodyLimit: true, time: Date.now() });
+  return c.json({ ok: true, trpcAdapter: true, time: Date.now() });
 });
 var index_default = handle(app);
 export {
