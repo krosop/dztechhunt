@@ -14,6 +14,7 @@ Improvements over old dztechhunt:
 import re
 from datetime import datetime
 from typing import Dict, List, Optional
+from name_cleaner import smart_name
 
 # ═══════════════════════════════════════════════════════════
 #  EXPANDED BRAND DATABASE (40+ brands)
@@ -414,54 +415,9 @@ def extract_psu_specs(name: str) -> Dict:
 #  ADVANCED CLEANING (merged from Downloads + dztechhunt)
 # ═══════════════════════════════════════════════════════════
 
-def clean_name(name: str) -> str:
-    """Advanced name cleaning — removes noise, normalizes whitespace, fixes encoding."""
-    if not name:
-        return ''
-
-    # Fix HTML entities (comprehensive from Downloads)
-    name = (name
-        .replace('&amp;', '&')
-        .replace('&quot;', '"')
-        .replace('&apos;', "'")
-        .replace('&#x27;', "'")
-        .replace('&lt;', '<')
-        .replace('&gt;', '>')
-        .replace('&nbsp;', ' ')
-        .replace('&#39;', "'")
-        .replace('&#34;', '"')
-        .replace('&rsquo;', "'")
-        .replace('&lsquo;', "'")
-        .replace('&rdquo;', '"')
-        .replace('&ldquo;', '"')
-        .replace('&mdash;', '-')
-        .replace('&ndash;', '-')
-        .replace('&hellip;', '...')
-        .replace('&#8217;', "'")
-        .replace('&#8220;', '"')
-        .replace('&#8221;', '"')
-    )
-
-    # Remove common retail noise patterns (from Downloads)
-    noise_patterns = [
-        r'\b(promo|solde|soldes|promotion|offre sp[eé]ciale)\b',
-        r'\b(livraison gratuite|gratuit|free shipping)\b',
-        r'\b(en stock|disponible|r[eé]servez)\b',
-        r'\b(achetez|commandez|shop now)\b',
-        r'\b(garantie\s+\d+\s*(an|mois|ans))\b',
-        r'\b(saisissez|profitez|nouveau)\b',
-        r'\(\s*\)',
-        r'\[\s*\]',
-    ]
-    for pattern in noise_patterns:
-        name = re.sub(pattern, '', name, flags=re.I)
-
-    # Normalize whitespace
-    name = re.sub(r'\s+', ' ', name)
-    name = re.sub(r'^[-\s]+|[-\s]+$', '', name)
-    name = name.replace('  ', ' ').strip()
-
-    return name
+def clean_name(name: str, category: str = '') -> str:
+    """Smart name cleaning — uses the advanced name_cleaner pipeline."""
+    return smart_name(name, category)
 
 
 def clean_price(price_str: str) -> Optional[float]:
