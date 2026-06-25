@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useData } from '@/components/DataProvider';
+import type { PriceView } from '@/supabase/types';
 import { useTranslation } from '@/i18n/useTranslation';
 import NavigationBar from '@/components/NavigationBar';
 import ProductCard from '@/components/ProductCard';
@@ -44,6 +45,16 @@ export default function SearchPage() {
       filtered = filtered.filter((p) => p.category_slug === activeCategory);
     }
 
+    // Deduplicate by product_id — keep the lowest price entry per product
+    const bestByProduct = new Map<string, PriceView>();
+    filtered.forEach((p) => {
+      const existing = bestByProduct.get(p.product_id);
+      if (!existing || p.current_price < existing.current_price) {
+        bestByProduct.set(p.product_id, p);
+      }
+    });
+    filtered = Array.from(bestByProduct.values());
+
     // Sort
     switch (sortBy) {
       case 'price-asc':
@@ -56,7 +67,7 @@ export default function SearchPage() {
         filtered = [...filtered].sort((a, b) => b.savings - a.savings);
         break;
       default:
-        // relevance: products matching query are already filtered, keep original order
+        // relevance: keep original order
         break;
     }
 
