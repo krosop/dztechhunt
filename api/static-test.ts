@@ -1,5 +1,16 @@
 // Static import test - catches module import errors
-import { app } from "../server/app";
+let importResult: any = { status: "pending" };
+
+try {
+  const { app } = await import("../server/app");
+  importResult = { status: "OK", appType: typeof app };
+} catch (e: any) {
+  importResult = { 
+    status: "FAIL", 
+    error: e.message,
+    stack: e.stack?.split('\n').slice(0, 15)
+  };
+}
 
 export default async function handler(req: any, res: any) {
   const results: any = {
@@ -7,9 +18,7 @@ export default async function handler(req: any, res: any) {
     time: new Date().toISOString(),
     nodeVersion: process.version,
     cwd: process.cwd(),
-    import_server_app: "OK",
-    appType: typeof app,
-    status: "STATIC_IMPORT_OK"
+    importResult,
   };
 
   res.statusCode = 200;
