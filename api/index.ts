@@ -1,17 +1,24 @@
-import { getRequestListener } from "@hono/node-server";
 import { Hono } from "hono";
 
 const app = new Hono();
-app.get("/api/trpc/ping", (c) => c.json({ ok: true, ts: Date.now() }));
 
-const handler = getRequestListener(app);
+app.all("*", (c) => {
+  return c.json({ 
+    ok: true, 
+    path: c.req.path,
+    url: c.req.url,
+    method: c.req.method 
+  });
+});
 
-export default function (req: any, res: any) {
+export default async function handler(req: Request) {
   try {
-    return handler(req, res);
+    return await app.fetch(req);
   } catch (err: any) {
-    console.error("[API CRASH]", err);
-    res.statusCode = 500;
-    res.end(JSON.stringify({ error: err?.message || "Unknown error", stack: err?.stack }));
+    console.error("[API ERROR]", err);
+    return new Response(
+      JSON.stringify({ error: err?.message || "Unknown", stack: err?.stack }),
+      { status: 500, headers: { "content-type": "application/json" } }
+    );
   }
 }
