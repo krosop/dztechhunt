@@ -78,19 +78,35 @@ function generateId(prefix: string, seed: string): string {
 
 function loadCleanData(): CleanProduct[] {
   try {
-    // Try clean data first, fallback to raw
-    const cleanPath = path.join(__dirname, "clean-products.json");
-    const rawPath = path.join(__dirname, "scrape-results.json");
-    
-    let filePath = cleanPath;
-    if (!fs.existsSync(cleanPath)) {
-      filePath = rawPath;
+    // Try multiple possible paths for the data file
+    const possiblePaths = [
+      path.join(__dirname, "clean-products.json"),
+      path.join(__dirname, "..", "public", "clean-products.json"),
+      path.join(__dirname, "..", "dist", "public", "clean-products.json"),
+      path.join(__dirname, "..", "..", "public", "clean-products.json"),
+      path.join(__dirname, "..", "..", "dist", "public", "clean-products.json"),
+    ];
+
+    // Find first existing clean-products.json
+    let filePath = possiblePaths.find((p) => fs.existsSync(p));
+
+    // Fallback to scrape-results.json in same dirs
+    if (!filePath) {
+      const fallbackPaths = [
+        path.join(__dirname, "scrape-results.json"),
+        path.join(__dirname, "..", "public", "scrape-data.json"),
+        path.join(__dirname, "..", "dist", "public", "scrape-data.json"),
+        path.join(__dirname, "..", "..", "public", "scrape-data.json"),
+        path.join(__dirname, "..", "..", "dist", "public", "scrape-data.json"),
+      ];
+      filePath = fallbackPaths.find((p) => fs.existsSync(p));
     }
-    if (!fs.existsSync(filePath)) return [];
+
+    if (!filePath) return [];
 
     const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
     const products: CleanProduct[] = data.products || [];
-    
+
     return products.filter((p) => {
       return p.canonicalName?.length > 3 && p.canonicalName.length < 200 && p.bestPrice > 1000;
     });
