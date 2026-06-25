@@ -4,8 +4,7 @@
   "outputDirectory": "dist/public",
   "routes": [
     { "src": "/api/minimal", "dest": "/api/minimal" },
-    { "src": "/api/hono", "dest": "/api/hono" },
-    { "src": "/api/hono-raw", "dest": "/api/hono-raw" },
+    { "src": "/api/static-test", "dest": "/api/static-test" },
     { "src": "/api/(.*)", "dest": "/api/index" },
     { "src": "/scrape-data.json", "dest": "/scrape-data.json" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
