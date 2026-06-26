@@ -8,6 +8,7 @@ import NavigationBar from '@/components/NavigationBar';
 import ProductHero from '@/sections/ProductHero';
 import DealsTable from '@/sections/DealsTable';
 import RelatedProducts from '@/sections/RelatedProducts';
+import SEO from '@/components/SEO';
 
 export default function Product() {
   const { t, isRTL } = useTranslation();
@@ -116,9 +117,22 @@ export default function Product() {
   }
 
   const product = entries[0];
+  const cheapest = entries.reduce((min, e) => e.current_price < min.current_price ? e : min, entries[0]);
 
   return (
     <div className="min-h-screen bg-[#0a0e14]">
+      <SEO
+        title={`${product.product_name} — Price Comparison Algeria`}
+        description={`Compare prices for ${product.product_name} in Algeria. Best price ${cheapest.current_price.toLocaleString()} DA from ${cheapest.store_name}.`}
+        image={product.product_image || 'https://dztechhunt-v3.vercel.app/images/og-cover.jpg'}
+        url={`https://dztechhunt-v3.vercel.app/#/product/${slug}`}
+        type="product"
+        price={cheapest.current_price}
+        brand={product.product_brand}
+        availability={cheapest.stock_status || 'In stock'}
+        rating={product.product_rating}
+        reviewCount={product.product_review_count}
+      />
       <NavigationBar />
       <main className="pt-16">
         <ProductHero entries={entries} product={product} />

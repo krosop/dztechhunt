@@ -3,7 +3,29 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/data/products.json",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=60, stale-while-revalidate=3600" }
+      ]
+    },
+    {
+      "source": "/images/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, immutable" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ],
   "routes": [
+    { "src": "/sitemap.xml", "dest": "/sitemap.xml", "headers": { "Content-Type": "application/xml" } },
+    { "src": "/robots.txt", "dest": "/robots.txt", "headers": { "Content-Type": "text/plain" } },
     { "src": "/data/(.*)", "dest": "/data/$1" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
     { "src": "/images/(.*)", "dest": "/images/$1" },

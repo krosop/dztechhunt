@@ -8,6 +8,7 @@ import { useTranslation } from '@/i18n/useTranslation';
 import NavigationBar from '@/components/NavigationBar';
 import ProductCard from '@/components/ProductCard';
 import { CardSkeleton } from '@/components/LoadingSkeleton';
+import SEO from '@/components/SEO';
 
 export default function SearchPage() {
   const { t, isRTL } = useTranslation();
@@ -102,6 +103,12 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0e14]">
+      <SEO
+        title={query ? `Search: ${query} — PC Parts Price Comparison` : 'Search PC Parts — Compare Prices in Algeria'}
+        description={query ? `Compare prices for ${query} in Algeria. Find the best deals on ${query} from top Algerian stores like Lahlou Industrie, Gaming DZ, Digitec DZ and more.` : 'Search and compare prices for graphics cards, CPUs, motherboards, RAM, SSDs, monitors & PC parts from top Algerian stores.'}
+        keywords={query ? `${query} price Algeria, buy ${query} Algeria, ${query} Algeria` : 'Algeria PC parts search, graphics card price Algeria, CPU price Algeria'}
+        url={`https://dztechhunt-v3.vercel.app/#/search${query ? `?q=${encodeURIComponent(query)}` : ''}`}
+      />
       <NavigationBar />
 
       <main className="pt-16">
