@@ -502,20 +502,50 @@ def detect_condition(name: str) -> str:
     return 'New'
 
 
+GPU_MANUFACTURERS = ['asus', 'msi', 'gigabyte', 'evga', 'asrock', 'sapphire', 'xfx', 'powercolor', 'zotac', 'palit', 'pny', 'biostar', 'colorful', 'galax', 'inno3d', 'gainward', 'yeston', 'maxsun']
+CPU_MANUFACTURERS = ['intel', 'amd']
+MB_MANUFACTURERS = ['asus', 'msi', 'gigabyte', 'asrock', 'evga', 'biostar', 'colorful']
+
+
+def detect_manufacturer_brand(name: str, category: str) -> str:
+    """Detect manufacturer brand (not chip brand) for GPU, CPU, motherboard."""
+    lower = name.lower()
+    if category == 'gpu':
+        for brand in GPU_MANUFACTURERS:
+            if brand in lower:
+                return ' '.join(w.capitalize() for w in brand.split())
+    elif category == 'cpu':
+        for brand in CPU_MANUFACTURERS:
+            if brand in lower:
+                return ' '.join(w.capitalize() for w in brand.split())
+    elif category == 'motherboard':
+        for brand in MB_MANUFACTURERS:
+            if brand in lower:
+                return ' '.join(w.capitalize() for w in brand.split())
+    return 'Unknown'
+
+
 def normalize_model_key(name: str, category: str) -> str:
-    """Generate normalized key for cross-retailer matching."""
+    """Generate normalized key for cross-retailer matching.
+    
+    For GPU, CPU, and motherboard: includes manufacturer brand in the key so that
+    ASUS RTX 5060 and MSI RTX 5060 are treated as separate products.
+    For RAM, SSD, etc: brand is stripped since they are commodities.
+    """
     lower = re.sub(r'[^\w\s\d]', ' ', name.lower())
+    brand = detect_manufacturer_brand(name, category)
+    brand_prefix = f"{brand}-" if brand and brand != 'Unknown' else ''
 
     if category == 'cpu':
         for p in [r'i[3579]\s*\d{4,5}[a-z]*', r'ryzen\s+[3579]\s*\d{4}[a-z]*', r'athlon\s+\w+']:
             m = re.search(p, lower)
             if m:
-                return m.group(0).replace(' ', '')
+                return f"{brand_prefix}{m.group(0).replace(' ', '')}"
     elif category == 'gpu':
         for p in [r'rtx\s*\d{4}\s*(?:ti|super)?', r'rx\s*\d{4}\s*(?:xt|xtx)?', r'gtx\s*\d{3,4}']:
             m = re.search(p, lower)
             if m:
-                return m.group(0).replace(' ', '')
+                return f"{brand_prefix}{m.group(0).replace(' ', '')}"
     elif category == 'ram':
         m = re.search(r'\d+\s*gb.*ddr[345].*\d{4}', lower)
         if m:
@@ -531,6 +561,39 @@ def normalize_model_key(name: str, category: str) -> str:
             return m.group(0).replace(' ', '')
     elif category == 'motherboard':
         m = re.search(r'([zbxha]\d{3}[a-z]?).*(ddr[45])', lower)
+        if m:
+            return f"{brand_prefix}{m.group(0).replace(' ', '')}"
+        # Also match socket type for AMD boards
+        m = re.search(r'(?:am[45]|lga\d{4,5}).*ddr[45]', lower)
+        if m:
+            return f"{brand_prefix}{m.group(0).replace(' ', '')}"
+    elif category == 'cooling':
+        m = re.search(r'\d+\s*(?:mm|cm).*\b(?:fan|radiator|watercool|liquid|aio)\b', lower)
+        if m:
+            return m.group(0).replace(' ', '')
+    elif category == 'case':
+        # Match case form factor
+        m = re.search(r'\b(?:mid[-\s]?tower|full[-\s]?tower|mini[-\s]?itx|micro[-\s]?atx|atx)\b', lower)
+        if m:
+            return m.group(0).replace(' ', '')
+    elif category == 'psu':
+        m = re.search(r'\d+\s*(?:w|watt)', lower)
+        if m:
+            return m.group(0).replace(' ', '')
+    elif category == 'keyboard':
+        m = re.search(r'\b(?:mechanical|membrane|optical)\b.*\b(?:keyboard|clavier)\b', lower)
+        if m:
+            return m.group(0).replace(' ', '')
+    elif category == 'mouse':
+        m = re.search(r'\b(?:gaming|office|wireless|wired)\b.*\b(?:mouse|souris)\b', lower)
+        if m:
+            return m.group(0).replace(' ', '')
+    elif category == 'headset':
+        m = re.search(r'\b(?:headset|casque|earphone|ecouteur)\b.*\b(?:gaming|wireless|wired)\b', lower)
+        if m:
+            return m.group(0).replace(' ', '')
+    elif category == 'laptop':
+        m = re.search(r'\b(?:laptop|notebook|ultrabook|chromebook)\b.*\b\d+"\b', lower)
         if m:
             return m.group(0).replace(' ', '')
     elif category == 'psu':
