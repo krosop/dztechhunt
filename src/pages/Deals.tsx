@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { TrendingDown, Store, RotateCcw, ChevronDown } from 'lucide-react';
+import { TrendingDown, Store, RotateCcw, ChevronDown, Zap, Tag } from 'lucide-react';
 import { useData } from '@/components/DataProvider';
 import { useTranslation } from '@/i18n/useTranslation';
 import NavigationBar from '@/components/NavigationBar';
@@ -11,53 +11,89 @@ import SEO from '@/components/SEO';
 
 const PAGE_SIZE = 20;
 
-type DealSort = 'savings-desc' | 'savings-asc' | 'price-asc' | 'price-desc';
+type DealSort = 'savings-desc' | 'price-asc' | 'price-desc' | 'most-compared';
 
 export default function DealsPage() {
   const { t, isRTL } = useTranslation();
-  const { loaded, loading, liveDeals } = useData();
-  const [sortBy, setSortBy] = useState<DealSort>('savings-desc');
+  const { loaded, loading, allProducts } = useData();
+  const [sortBy, setSortBy] = useState<DealSort>('most-compared');
   const [activeStore, setActiveStore] = useState<string>('all');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [page, setPage] = useState(1);
 
-  // Deduplicate by product_id — show best deal per product
-  const uniqueDeals = useMemo(() => {
-    const byProduct = new Map<string, typeof liveDeals[number]>();
-    for (const d of liveDeals) {
-      const existing = byProduct.get(d.product_id);
-      if (!existing || d.savings > existing.savings) {
-        byProduct.set(d.product_id, d);
+  // Products with actual savings OR products with multiple listings (most compared)
+  const dealsProducts = useMemo(() => {
+    // Group by product_id to count listings
+    const byProduct = new Map<string, { product: typeof allProducts[0]; listings: number; hasSavings: boolean; bestSavings: number }>();
+    
+    for (const p of allProducts) {
+      const existing = byProduct.get(p.product_id);
+      if (!existing) {
+        byProduct.set(p.product_id, {
+          product: p,
+          listings: 1,
+          hasSavings: p.savings > 0,
+          bestSavings: p.savings,
+        });
+      } else {
+        existing.listings++;
+        if (p.savings > existing.bestSavings) {
+          existing.bestSavings = p.savings;
+          existing.hasSavings = true;
+          // Keep the listing with best savings
+          existing.product = p;
+        }
       }
     }
+    
     return Array.from(byProduct.values());
-  }, [liveDeals]);
+  }, [allProducts]);
 
-  // Available stores from liveDeals
+  // Filter for products with actual deals first, fallback to most-compared
+  const hasRealDeals = dealsProducts.some(d => d.hasSavings);
+  
+  const uniqueDeals = useMemo(() => {
+    if (hasRealDeals) {
+      // Only show products with actual savings
+      return dealsProducts.filter(d => d.hasSavings).map(d => d.product);
+    }
+    // Fallback: show products with 2+ listings (most compared = best deals potential)
+    return dealsProducts.filter(d => d.listings >= 2).map(d => d.product);
+  }, [dealsProducts, hasRealDeals]);
+
+  // Available stores and categories
   const stores = useMemo(() => {
     const s = new Map<string, string>();
     s.set('all', t.search_all);
     uniqueDeals.forEach((d) => {
-      if (!s.has(d.store_name)) {
-        s.set(d.store_name, d.store_name);
-      }
+      if (!s.has(d.store_name)) s.set(d.store_name, d.store_name);
     });
     return Array.from(s.entries());
   }, [uniqueDeals, t]);
 
-  // Filtered + sorted deals
+  const categories = useMemo(() => {
+    const c = new Map<string, string>();
+    c.set('all', t.search_all);
+    uniqueDeals.forEach((d) => {
+      if (!c.has(d.category_slug)) c.set(d.category_slug, d.category_name_fr);
+    });
+    return Array.from(c.entries());
+  }, [uniqueDeals, t]);
+
+  // Filtered + sorted
   const filtered = useMemo(() => {
     let results = [...uniqueDeals];
 
     if (activeStore !== 'all') {
       results = results.filter((d) => d.store_name === activeStore);
     }
+    if (activeCategory !== 'all') {
+      results = results.filter((d) => d.category_slug === activeCategory);
+    }
 
     switch (sortBy) {
       case 'savings-desc':
         results.sort((a, b) => b.savings - a.savings);
-        break;
-      case 'savings-asc':
-        results.sort((a, b) => a.savings - b.savings);
         break;
       case 'price-asc':
         results.sort((a, b) => a.current_price - b.current_price);
@@ -65,10 +101,18 @@ export default function DealsPage() {
       case 'price-desc':
         results.sort((a, b) => b.current_price - a.current_price);
         break;
+      case 'most-compared':
+        // Sort by number of listings (we need to recompute)
+        const listingCounts = new Map<string, number>();
+        for (const p of allProducts) {
+          listingCounts.set(p.product_id, (listingCounts.get(p.product_id) || 0) + 1);
+        }
+        results.sort((a, b) => (listingCounts.get(b.product_id) || 0) - (listingCounts.get(a.product_id) || 0));
+        break;
     }
 
     return results;
-  }, [uniqueDeals, activeStore, sortBy]);
+  }, [uniqueDeals, activeStore, activeCategory, sortBy, allProducts]);
 
   const paginated = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = paginated.length < filtered.length;
@@ -79,9 +123,9 @@ export default function DealsPage() {
 
   const sortLabels: Record<DealSort, string> = {
     'savings-desc': t.search_sort_savings,
-    'savings-asc': t.search_sort_relevance,
     'price-asc': t.search_sort_price_asc,
     'price-desc': t.search_sort_price_desc,
+    'most-compared': 'Most Compared',
   };
 
   return (
@@ -98,7 +142,6 @@ export default function DealsPage() {
         {/* Header */}
         <section className="bg-[#070a10] border-b border-[#1a2332] py-8 sm:py-10">
           <div className="page-padding">
-            {/* Breadcrumb */}
             <div className={`flex items-center gap-1.5 text-[11px] text-[#4a5568] mb-5 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <Link to="/" className="hover:text-[#00d4aa] transition-colors">{t.breadcrumb_home}</Link>
               <span>/</span>
@@ -114,16 +157,17 @@ export default function DealsPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingDown className="w-5 h-5 text-[#00d4aa]" />
                   <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#00d4aa]">
-                    {t.deals_title}
+                    {hasRealDeals ? t.deals_title : 'Most Compared'}
                   </span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">{t.page_deals_title}</h1>
                 <p className="mt-2 text-[13px] sm:text-[15px] text-[#5a6a7e] max-w-[600px]">
-                  {t.page_deals_desc}
+                  {hasRealDeals 
+                    ? t.page_deals_desc 
+                    : 'Products with the most price comparisons across Algerian stores. Real deals coming after next data refresh.'}
                 </p>
               </motion.div>
 
-              {/* Stats pills */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -132,23 +176,38 @@ export default function DealsPage() {
               >
                 <div className="bg-[#111821] border border-[#1a2332] rounded-xl px-4 py-3 text-center">
                   <p className="text-xl font-bold text-[#00d4aa]">{uniqueDeals.length}</p>
-                  <p className="text-[10px] text-[#4a5568] uppercase tracking-wider font-medium">Deals</p>
-                </div>
-                <div className="bg-[#111821] border border-[#1a2332] rounded-xl px-4 py-3 text-center">
-                  <p className="text-xl font-bold text-[#00d4aa]">
-                    {(totalSavings / 1000).toFixed(0)}K
+                  <p className="text-[10px] text-[#4a5568] uppercase tracking-wider font-medium">
+                    {hasRealDeals ? 'Deals' : 'Compared'}
                   </p>
-                  <p className="text-[10px] text-[#4a5568] uppercase tracking-wider font-medium">DA Saved</p>
                 </div>
+                {hasRealDeals && (
+                  <div className="bg-[#111821] border border-[#1a2332] rounded-xl px-4 py-3 text-center">
+                    <p className="text-xl font-bold text-[#00d4aa]">
+                      {(totalSavings / 1000).toFixed(0)}K
+                    </p>
+                    <p className="text-[10px] text-[#4a5568] uppercase tracking-wider font-medium">DA Saved</p>
+                  </div>
+                )}
               </motion.div>
             </div>
           </div>
         </section>
 
+        {!hasRealDeals && (
+          <div className="page-padding py-3">
+            <div className="bg-[#00d4aa]/5 border border-[#00d4aa]/15 rounded-xl px-4 py-3 flex items-center gap-3">
+              <Zap className="w-4 h-4 text-[#00d4aa]/60 shrink-0" />
+              <p className="text-[12px] text-[#7a8a9e]">
+                <span className="text-[#00d4aa] font-medium">Coming soon:</span> Real discount detection is active. After the next daily data refresh, this page will show actual price drops from Algerian stores.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Filters & Results */}
         <section className="page-padding py-6 sm:py-8">
           {/* Filter bar */}
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
+          <div className="flex flex-col gap-3 sm:gap-4 mb-5 sm:mb-6">
             <div className="flex items-center gap-2 flex-nowrap overflow-x-auto pb-2 sm:pb-0 -mx-2 px-2 sm:mx-0 sm:px-0 scrollbar-none">
               <Store className="w-4 h-4 text-[#4a5568] shrink-0 hidden sm:block" />
               {stores.map(([slug, name]) => (
@@ -165,16 +224,35 @@ export default function DealsPage() {
                 </button>
               ))}
             </div>
-
-            <select
-              value={sortBy}
-              onChange={(e) => { setSortBy(e.target.value as DealSort); setPage(1); }}
-              className="bg-[#131b26] border border-[#1a2332] text-[#c8d0d9] text-[12px] font-medium rounded-lg px-3 py-2 outline-none focus:border-[#00d4aa]/50 cursor-pointer shrink-0"
-            >
-              {(Object.keys(sortLabels) as DealSort[]).map((k) => (
-                <option key={k} value={k}>{sortLabels[k]}</option>
+            
+            <div className="flex items-center gap-2 flex-nowrap overflow-x-auto pb-2 sm:pb-0 -mx-2 px-2 sm:mx-0 sm:px-0 scrollbar-none">
+              <Tag className="w-4 h-4 text-[#4a5568] shrink-0 hidden sm:block" />
+              {categories.map(([slug, name]) => (
+                <button
+                  key={slug}
+                  onClick={() => { setActiveCategory(slug); setPage(1); }}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium whitespace-nowrap transition-all shrink-0 ${
+                    activeCategory === slug
+                      ? 'bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/30'
+                      : 'bg-[#131b26] text-[#7a8a9e] border border-[#1a2332] hover:border-[#2a3545]'
+                  }`}
+                >
+                  {name}
+                </button>
               ))}
-            </select>
+            </div>
+
+            <div className="flex justify-end">
+              <select
+                value={sortBy}
+                onChange={(e) => { setSortBy(e.target.value as DealSort); setPage(1); }}
+                className="bg-[#131b26] border border-[#1a2332] text-[#c8d0d9] text-[12px] font-medium rounded-lg px-3 py-2 outline-none focus:border-[#00d4aa]/50 cursor-pointer shrink-0"
+              >
+                {(Object.keys(sortLabels) as DealSort[]).map((k) => (
+                  <option key={k} value={k}>{sortLabels[k]}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Results count */}
@@ -192,9 +270,9 @@ export default function DealsPage() {
               )}
             </span>
 
-            {activeStore !== 'all' && (
+            {(activeStore !== 'all' || activeCategory !== 'all') && (
               <button
-                onClick={() => { setActiveStore('all'); setPage(1); }}
+                onClick={() => { setActiveStore('all'); setActiveCategory('all'); setPage(1); }}
                 className="inline-flex items-center gap-1 text-[11px] text-[#4a5568] hover:text-[#00d4aa] transition-colors"
               >
                 <RotateCcw className="w-3 h-3" /> {t.search_clear}

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { TrendingUp, ChevronDown } from 'lucide-react';
+import { TrendingUp, Tag, RotateCcw, ChevronDown, Flame } from 'lucide-react';
 import { useData } from '@/components/DataProvider';
 import { useTranslation } from '@/i18n/useTranslation';
 import NavigationBar from '@/components/NavigationBar';
@@ -11,29 +11,44 @@ import SEO from '@/components/SEO';
 
 const PAGE_SIZE = 20;
 
-type TrendingSort = 'reviews-desc' | 'price-asc' | 'price-desc' | 'savings-desc';
+type TrendingSort = 'reviews-desc' | 'price-asc' | 'price-desc' | 'savings-desc' | 'most-listed';
 
 export default function TrendingPage() {
   const { t, isRTL } = useTranslation();
-  const { loaded, loading, trending } = useData();
+  const { loaded, loading, allProducts } = useData();
   const [sortBy, setSortBy] = useState<TrendingSort>('reviews-desc');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [page, setPage] = useState(1);
 
-  // Deduplicate by product_id
+  // Deduplicate by product_id — keep the one with highest reviews
   const uniqueTrending = useMemo(() => {
-    const byProduct = new Map<string, typeof trending[number]>();
-    for (const item of trending) {
+    const byProduct = new Map<string, typeof allProducts[number]>();
+    for (const item of allProducts) {
       const existing = byProduct.get(item.product_id);
       if (!existing || item.product_review_count > existing.product_review_count) {
         byProduct.set(item.product_id, item);
       }
     }
     return Array.from(byProduct.values());
-  }, [trending]);
+  }, [allProducts]);
+
+  // Categories from trending products
+  const categories = useMemo(() => {
+    const c = new Map<string, string>();
+    c.set('all', t.search_all);
+    uniqueTrending.forEach((p) => {
+      if (!c.has(p.category_slug)) c.set(p.category_slug, p.category_name_fr);
+    });
+    return Array.from(c.entries());
+  }, [uniqueTrending, t]);
 
   // Filtered + sorted
   const filtered = useMemo(() => {
     let results = [...uniqueTrending];
+
+    if (activeCategory !== 'all') {
+      results = results.filter((p) => p.category_slug === activeCategory);
+    }
 
     switch (sortBy) {
       case 'reviews-desc':
@@ -48,10 +63,17 @@ export default function TrendingPage() {
       case 'savings-desc':
         results.sort((a, b) => b.savings - a.savings);
         break;
+      case 'most-listed':
+        const listingCounts = new Map<string, number>();
+        for (const p of allProducts) {
+          listingCounts.set(p.product_id, (listingCounts.get(p.product_id) || 0) + 1);
+        }
+        results.sort((a, b) => (listingCounts.get(b.product_id) || 0) - (listingCounts.get(a.product_id) || 0));
+        break;
     }
 
     return results;
-  }, [uniqueTrending, sortBy]);
+  }, [uniqueTrending, activeCategory, sortBy, allProducts]);
 
   const paginated = filtered.slice(0, page * PAGE_SIZE);
   const hasMore = paginated.length < filtered.length;
@@ -61,6 +83,7 @@ export default function TrendingPage() {
     'price-asc': t.search_sort_price_asc,
     'price-desc': t.search_sort_price_desc,
     'savings-desc': t.search_sort_savings,
+    'most-listed': 'Most Listed',
   };
 
   return (
@@ -77,7 +100,6 @@ export default function TrendingPage() {
         {/* Header */}
         <section className="bg-[#070a10] border-b border-[#1a2332] py-8 sm:py-10">
           <div className="page-padding">
-            {/* Breadcrumb */}
             <div className={`flex items-center gap-1.5 text-[11px] text-[#4a5568] mb-5 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <Link to="/" className="hover:text-[#00d4aa] transition-colors">{t.breadcrumb_home}</Link>
               <span>/</span>
@@ -120,8 +142,23 @@ export default function TrendingPage() {
         {/* Filters & Results */}
         <section className="page-padding py-6 sm:py-8">
           {/* Filter bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
-            <div />
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
+            <div className="flex items-center gap-2 flex-nowrap overflow-x-auto pb-2 sm:pb-0 -mx-2 px-2 sm:mx-0 sm:px-0 scrollbar-none">
+              <Tag className="w-4 h-4 text-[#4a5568] shrink-0 hidden sm:block" />
+              {categories.map(([slug, name]) => (
+                <button
+                  key={slug}
+                  onClick={() => { setActiveCategory(slug); setPage(1); }}
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium whitespace-nowrap transition-all shrink-0 ${
+                    activeCategory === slug
+                      ? 'bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/30'
+                      : 'bg-[#131b26] text-[#7a8a9e] border border-[#1a2332] hover:border-[#2a3545]'
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
 
             <select
               value={sortBy}
@@ -148,6 +185,15 @@ export default function TrendingPage() {
                 </>
               )}
             </span>
+
+            {activeCategory !== 'all' && (
+              <button
+                onClick={() => { setActiveCategory('all'); setPage(1); }}
+                className="inline-flex items-center gap-1 text-[11px] text-[#4a5568] hover:text-[#00d4aa] transition-colors"
+              >
+                <RotateCcw className="w-3 h-3" /> {t.search_clear}
+              </button>
+            )}
           </div>
 
           {/* Results grid */}
@@ -159,7 +205,7 @@ export default function TrendingPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-16">
-              <TrendingUp className="w-12 h-12 text-[#1a2332] mx-auto mb-4" />
+              <Flame className="w-12 h-12 text-[#1a2332] mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-white mb-2">{t.search_no_results}</h3>
               <p className="text-[13px] text-[#5a6a7e]">{t.search_try_different}</p>
             </div>

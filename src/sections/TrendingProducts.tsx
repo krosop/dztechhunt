@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useData } from '@/components/DataProvider';
 import { useTranslation } from '@/i18n/useTranslation';
@@ -40,9 +41,13 @@ export default function TrendingProducts() {
           title={t.trending_title}
           description={t.trending_desc}
           rightAction={
-            <span className="text-sm font-medium text-[#00d4aa] hover:text-[#00d4aa]/80 flex items-center gap-1 cursor-pointer transition-colors" dir={isRTL ? 'rtl' : 'ltr'}>
+            <Link
+              to="/trending"
+              className="text-sm font-medium text-[#00d4aa] hover:text-[#00d4aa]/80 flex items-center gap-1 cursor-pointer transition-colors"
+              dir={isRTL ? 'rtl' : 'ltr'}
+            >
               {t.trending_view_all} <ArrowIcon className="w-4 h-4" />
-            </span>
+            </Link>
           }
         />
       </div>
