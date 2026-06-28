@@ -14,10 +14,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
           <div className="lg:col-span-1">
             <Link to="/" className="text-xl font-extrabold text-white">
-              Price<span className="text-[#00d4aa]">Zap</span>
+              DZ<span className="text-[#00d4aa]">TechHunt</span>
             </Link>
             <p className="mt-4 text-sm text-[#5a6a7e] leading-relaxed">
-              Compare prices across Amazon, Newegg, Best Buy, Walmart, and 40+ more retailers. Build your dream PC for less.
+              Compare prices across Lahlou Industrie, Gaming DZ, Digitec DZ, and 100+ Algerian PC stores. Build your dream PC for less.
             </p>
             <div className="flex gap-3 mt-5">
               {['X', 'IG', 'DC'].map((s) => (
@@ -53,7 +53,7 @@ export default function Footer() {
       </div>
 
       <div className="page-padding py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <p className="text-sm text-[#4a5568]">2025 PriceZap. All rights reserved.</p>
+        <p className="text-sm text-[#4a5568]">© 2025 DZ TechHunt. All rights reserved.</p>
         <div className="flex gap-5">
           {['Privacy', 'Terms', 'Cookie Policy', 'Contact'].map((item) => (
             <span key={item} className="text-sm text-[#4a5568] hover:text-[#7a8a9e] transition-colors duration-150 cursor-pointer">

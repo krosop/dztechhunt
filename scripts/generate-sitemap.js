@@ -17,6 +17,8 @@ const staticRoutes = [
   { url: `${SITE_URL}/#/search?q=ssd`, priority: 0.8, changefreq: 'daily' },
   { url: `${SITE_URL}/#/search?q=monitor`, priority: 0.8, changefreq: 'daily' },
   { url: `${SITE_URL}/#/search?q=gaming+pc`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/#/search?q=gaming+mouse`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/#/search?q=mechanical+keyboard`, priority: 0.8, changefreq: 'daily' },
 ];
 
 function generateSitemap() {

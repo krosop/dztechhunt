@@ -1,7 +1,7 @@
 """
 Ouedkniss Scraper — https://www.ouedkniss.com
 Uses the public GraphQL API to fetch PC parts announcements.
-Only scrapes informatique (PC parts) category.
+Supports both general category scraping and store-specific scraping.
 """
 import sys
 import requests
@@ -18,7 +18,7 @@ GRAPHQL_URL = 'https://api.ouedkniss.com/graphql'
 BASE_URL = 'https://www.ouedkniss.com'
 
 SEARCH_QUERY = '''
-query SearchQuery($q: String, $filter: SearchFilterInput, $mediaSize: MediaSize = MEDIUM) {
+query SearchQuery($q: String, $filter: SearchFilterInput) {
   search(q: $q, filter: $filter) {
     announcements {
       data {
@@ -32,7 +32,7 @@ query SearchQuery($q: String, $filter: SearchFilterInput, $mediaSize: MediaSize 
         oldPricePreview
         priceUnit
         priceType
-        defaultMedia(size: $mediaSize) {
+        defaultMedia {
           mediaUrl
           thumbnail
         }
@@ -58,11 +58,29 @@ query SearchQuery($q: String, $filter: SearchFilterInput, $mediaSize: MediaSize 
       paginatorInfo {
         lastPage
         hasMorePages
+        total
       }
     }
   }
 }
 '''
+
+# New Ouedkniss stores to scrape (store_id -> store_name)
+OUEDKNISS_STORES = {
+    '36761': 'Orbitech',
+    '31810': 'KPC Solutions',
+    '19409': 'V2 Tech',
+    '34384': 'Tech Mania',
+    '5975':  'PC Pro DZ',
+    '18611': 'Microsoft Pro DZ',
+    '20744': 'BR Informatique',
+    '38815': 'GamingZone by Divatech',
+    '17356': 'Hiprospace',
+    '1059':  'Admin Informatique',
+    '12489': 'Informatics',
+    '17937': 'IT Device',
+    '39421': 'Best Buy DZ',
+}
 
 
 class OuedknissScraper:
@@ -84,31 +102,35 @@ class OuedknissScraper:
             'Referer': 'https://www.ouedkniss.com/',
         })
 
-    def _fetch_page(self, category_slug: str, page: int = 1) -> dict:
+    def _fetch_page(self, category_slug: str, page: int = 1, store_id: str = None) -> dict:
         """Fetch a page of announcements via GraphQL."""
         import time, random
         time.sleep(random.uniform(0.8, self.delay))
 
+        filter_obj = {
+            'categorySlug': category_slug,
+            'origin': None,
+            'connected': False,
+            'delivery': None,
+            'regionIds': [],
+            'cityIds': [],
+            'priceRange': [],
+            'exchange': None,
+            'hasPictures': False,
+            'hasPrice': False,
+            'priceUnit': None,
+            'fields': [],
+            'page': page,
+            'orderByField': {'field': 'REFRESHED_AT'},
+            'count': 48,
+        }
+
+        if store_id:
+            filter_obj['storeId'] = store_id
+
         variables = {
-            'mediaSize': 'MEDIUM',
             'q': None,
-            'filter': {
-                'categorySlug': category_slug,
-                'origin': None,
-                'connected': False,
-                'delivery': None,
-                'regionIds': [],
-                'cityIds': [],
-                'priceRange': [],
-                'exchange': None,
-                'hasPictures': False,
-                'hasPrice': False,
-                'priceUnit': None,
-                'fields': [],
-                'page': page,
-                'orderByField': {'field': 'REFRESHED_AT'},
-                'count': 48,
-            }
+            'filter': filter_obj,
         }
 
         payload = {
@@ -196,12 +218,14 @@ class OuedknissScraper:
 
         return products
 
-    def scrape_category(self, category_slug: str, name: str) -> List[Dict]:
-        print(f"[+] Ouedkniss scraping {name}: {category_slug}")
+    def _scrape_category_or_store(self, category_slug: str, name: str, store_id: str = None) -> List[Dict]:
+        """Scrape a category, optionally filtered by store."""
+        label = f"{name} (store {store_id})" if store_id else name
+        print(f"[+] Ouedkniss scraping {label}: {category_slug}")
         all_products = []
 
         try:
-            data = self._fetch_page(category_slug, page=1)
+            data = self._fetch_page(category_slug, page=1, store_id=store_id)
             products = self._parse_announcements(data)
             all_products.extend(products)
             print(f"    Page 1: {len(products)} products")
@@ -210,11 +234,14 @@ class OuedknissScraper:
             paginator = data.get('data', {}).get('search', {}).get('announcements', {}).get('paginatorInfo', {})
             last_page = paginator.get('lastPage', 1)
             has_more = paginator.get('hasMorePages', False)
+            total = paginator.get('total', len(products))
 
             if last_page > 1 and has_more:
-                for page in range(2, min(last_page + 1, 10)):
+                # Use actual last_page from API, but cap at reasonable limit
+                max_pages = min(last_page + 1, 30)
+                for page in range(2, max_pages):
                     try:
-                        data = self._fetch_page(category_slug, page=page)
+                        data = self._fetch_page(category_slug, page=page, store_id=store_id)
                         products = self._parse_announcements(data)
                         if not products:
                             break
@@ -226,29 +253,65 @@ class OuedknissScraper:
         except Exception as e:
             print(f"    [!] Failed: {e}")
 
-        print(f"[+] {name}: {len(all_products)} total")
+        print(f"[+] {label}: {len(all_products)} total (API reported {total if 'total' in dir() else 'N/A'})")
         return all_products
 
-    def scrape_all(self, categories: list = None) -> List[Dict]:
-        # Only PC parts (informatique)
-        cats = categories or ['pc_part']
+    def scrape_all(self, categories: list = None, stores: dict = None) -> List[Dict]:
+        """
+        Scrape products. If stores dict provided, scrape each store individually.
+        Otherwise, scrape general category.
+        """
         all_products = []
-        for cat in cats:
-            if cat not in self.CATEGORIES:
-                print(f"[!] Unknown: {cat}"); continue
-            slug = self.CATEGORIES[cat]
-            try:
-                products = self.scrape_category(slug, cat)
-                all_products.extend(products)
-            except Exception as e:
-                print(f"[!] Failed {cat}: {e}")
+
+        # If stores are specified, scrape each store
+        if stores:
+            for store_id, store_name in stores.items():
+                try:
+                    products = self._scrape_category_or_store(
+                        'informatique', store_name, store_id=store_id
+                    )
+                    all_products.extend(products)
+                except Exception as e:
+                    print(f"[!] Failed store {store_name} ({store_id}): {e}")
+        else:
+            # Legacy: scrape general category
+            cats = categories or ['pc_part']
+            for cat in cats:
+                if cat not in self.CATEGORIES:
+                    print(f"[!] Unknown: {cat}"); continue
+                slug = self.CATEGORIES[cat]
+                try:
+                    products = self._scrape_category_or_store(slug, cat)
+                    all_products.extend(products)
+                except Exception as e:
+                    print(f"[!] Failed {cat}: {e}")
+
         print(f"\n[+] Ouedkniss: {len(all_products)} products total")
         return all_products
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='Ouedkniss scraper')
+    parser.add_argument('--stores', action='store_true', help='Scrape specific stores instead of general category')
+    parser.add_argument('--store-id', type=str, help='Scrape a single store by ID')
+    args = parser.parse_args()
+
     scraper = OuedknissScraper()
-    products = scraper.scrape_all()
-    print(f"Scraped {len(products)} products")
+
+    if args.store_id:
+        # Scrape single store
+        store_name = OUEDKNISS_STORES.get(args.store_id, 'Unknown')
+        products = scraper._scrape_category_or_store('informatique', store_name, store_id=args.store_id)
+        print(f"Scraped {len(products)} products from {store_name}")
+    elif args.stores:
+        # Scrape all configured stores
+        products = scraper.scrape_all(stores=OUEDKNISS_STORES)
+        print(f"Scraped {len(products)} products from {len(OUEDKNISS_STORES)} stores")
+    else:
+        # Legacy: scrape general category
+        products = scraper.scrape_all()
+        print(f"Scraped {len(products)} products")
+
     for p in products[:5]:
-        print(f"  {p['name'][:80]} @ {p['price']}")
+        print(f"  {p['name'][:80]} @ {p['price']} | {p['retailer_name']}")

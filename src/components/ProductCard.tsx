@@ -5,25 +5,62 @@ import { useTranslation } from '@/i18n/useTranslation';
 import type { PriceView } from '@/supabase/types';
 import StarRating from './StarRating';
 import CategoryImage from './CategoryImage';
+import { highlightMatches, type HighlightSegment } from '@/utils/smartSearch';
 
 interface ProductCardProps {
   product: PriceView;
   index?: number;
+  query?: string;
+  animate?: boolean;
 }
 
-export default function ProductCard({ product, index = 0 }: ProductCardProps) {
+function HighlightedTitle({ segments }: { segments: HighlightSegment[] }) {
+  return (
+    <>
+      {segments.map((seg, i) =>
+        seg.isMatch ? (
+          <span
+            key={i}
+            className={
+              seg.matchType === 'exact'
+                ? 'text-[#00d4aa] font-semibold'
+                : seg.matchType === 'spec'
+                ? 'text-[#f59e0b] font-semibold'
+                : seg.matchType === 'synonym'
+                ? 'text-[#8b5cf6] font-semibold'
+                : 'text-[#00d4aa]/80 font-medium'
+            }
+          >
+            {seg.text}
+          </span>
+        ) : (
+          <span key={i}>{seg.text}</span>
+        )
+      )}
+    </>
+  );
+}
+
+export default function ProductCard({ product, index = 0, query, animate = true }: ProductCardProps) {
   const { t } = useTranslation();
   const savingsPercent = product.original_price > 0
     ? Math.round((product.savings / product.original_price) * 100)
     : 0;
 
+  const segments = query ? highlightMatches(product.product_name, query) : null;
+
+  const CardWrapper = animate ? motion.div : 'div';
+  const wrapperProps = animate
+    ? {
+        initial: { opacity: 0, y: 20 } as any,
+        whileInView: { opacity: 1, y: 0 } as any,
+        viewport: { once: true, amount: 0.1 },
+        transition: { duration: 0.4, delay: Math.min(index * 0.06, 0.6), ease: 'easeOut' as const },
+      }
+    : {};
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.1 }}
-      transition={{ duration: 0.4, delay: index * 0.06, ease: 'easeOut' }}
-    >
+    <CardWrapper {...wrapperProps}>
       <Link
         to={`/product/${product.product_slug}`}
         className="group block bg-[#111821] border border-[#1a2332] rounded-xl p-3 sm:p-5 hover:border-[#00d4aa]/30 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#00d4aa]/5 transition-all duration-300"
@@ -47,7 +84,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         </span>
 
         <h3 className="text-sm sm:text-base font-semibold text-[#c8d0d9] group-hover:text-white truncate mb-2 sm:mb-2.5 leading-snug transition-colors">
-          {product.product_name}
+          {segments ? <HighlightedTitle segments={segments} /> : product.product_name}
         </h3>
 
         <div className="flex items-baseline gap-2 sm:gap-2.5 mb-2 sm:mb-2.5">
@@ -74,6 +111,6 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           <StarRating rating={product.product_rating} size={12} reviewCount={product.product_review_count} />
         </div>
       </Link>
-    </motion.div>
+    </CardWrapper>
   );
 }

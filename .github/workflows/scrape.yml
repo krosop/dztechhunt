@@ -44,7 +44,7 @@ jobs:
         timeout-minutes: 20
 
       # ─── Convert data for new frontend ───
-      - name: Convert data to PriceZap format
+      - name: Convert data to DZ TechHunt format
         run: node scripts/convert-data.js
 
       # ─── Upload artifacts ───

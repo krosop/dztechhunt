@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { buildSearchIndex, type SearchIndex } from '@/utils/smartSearch';
 import { getStores, getCategories, getTopDeals, getTrending, getProductCount, getStoreCount, subscribeToPriceChanges } from '@/supabase/api';
 import type { PriceView, CategoryStat, StoreRow } from '@/supabase/types';
 
@@ -14,6 +15,7 @@ interface DataContextValue {
   trending: PriceView[];
   productCount: number;
   storeCount: number;
+  searchIndex: SearchIndex | null;
   refresh: () => void;
 }
 
@@ -29,6 +31,7 @@ const DataContext = createContext<DataContextValue>({
   trending: [],
   productCount: 0,
   storeCount: 0,
+  searchIndex: null,
   refresh: () => {},
 });
 
@@ -45,6 +48,7 @@ export default function DataProvider({ children }: { children: React.ReactNode }
   const [liveDeals, setLiveDeals] = useState<PriceView[]>([]);
   const [trending, setTrending] = useState<PriceView[]>([]);
   const [allProducts, setAllProducts] = useState<PriceView[]>([]);
+  const [searchIndex, setSearchIndex] = useState<SearchIndex | null>(null);
   const [productCount, setProductCount] = useState(0);
   const [storeCount, setStoreCount] = useState(0);
   const realtimeRef = useRef<any>(null);
@@ -115,6 +119,7 @@ export default function DataProvider({ children }: { children: React.ReactNode }
       setCategories(cats);
       setStores(storeEntries);
       setAllProducts(allProducts);
+      setSearchIndex(buildSearchIndex(allProducts));
       setLiveDeals(mixedDeals);
       setTrending(mixedTrend);
       setProductCount(data.products?.length || 0);
@@ -180,7 +185,7 @@ export default function DataProvider({ children }: { children: React.ReactNode }
   }, [fetchData]);
 
   return (
-    <DataContext.Provider
+      <DataContext.Provider
       value={{
         loaded,
         loading,
@@ -193,6 +198,7 @@ export default function DataProvider({ children }: { children: React.ReactNode }
         trending,
         productCount,
         storeCount,
+        searchIndex,
         refresh: fetchData,
       }}
     >

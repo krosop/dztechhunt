@@ -15,6 +15,8 @@ const CATEGORY_MAP = {
   'case': 'cases',
   'cooler': 'cooling',
   'monitor': 'monitors',
+  'mouse': 'mouse',
+  'keyboard': 'keyboard',
   'laptop': 'pc-parts',
   'accessory': 'accessories',
   'unknown': 'pc-parts',
@@ -32,6 +34,8 @@ const CATEGORY_NAMES = {
   'cooling': 'Refroidissement',
   'monitors': 'Écrans',
   'accessories': 'Accessoires',
+  'mouse': 'Souris',
+  'keyboard': 'Claviers',
   'phones': 'Téléphones',
   'peripherals': 'Périphériques',
 };

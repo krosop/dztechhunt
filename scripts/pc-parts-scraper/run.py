@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
-PC Parts Scraper — Main Runner for 8 Algerian retailers
+PC Parts Scraper — Main Runner for 11 Algerian retailers + 13 Ouedkniss stores
 Scrapes all sites, cleans data, pushes to Supabase.
 
 Usage:
     python run.py                              # Scrape all sites
+    python run.py --sites ouedkniss            # Only Ouedkniss stores
     python run.py --sites licbplus tiza        # Only specific sites
-    python run.py --sites licbplus --cats cpu  # Site + category filter
+    python run.py --cats cpu                   # Category filter
     python run.py --dry-run                    # Process existing data
 
-Sites: licbplus, wifidjelfa, tiza, geekzone, digitec, gigastore, gamingdz, lahlou, hardsoft
+Sites: licbplus, wifidjelfa, tiza, geekzone, digitec, gigastore, gamingdz, lahlou, hardsoft, matos, ouedkniss
 """
 import argparse
 import sys
@@ -21,6 +22,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from categorizer import clean_all
 from supabase_client import upsert_products_batch, test_connection
+
+from sites.ouedkniss import OUEDKNISS_STORES
 
 # All available scrapers
 SCRAPER_MAP = {
@@ -45,11 +48,14 @@ def load_scraper(site_name: str):
     return getattr(module, class_name)
 
 
-def scrape_site(site_name: str, categories: list = None) -> list:
+def scrape_site(site_name: str, categories: list = None, stores: dict = None) -> list:
     """Run a scraper and return raw products."""
     try:
         ScraperClass = load_scraper(site_name)
         scraper = ScraperClass()
+        # Ouedkniss supports store-specific scraping
+        if site_name == 'ouedkniss' and stores:
+            return scraper.scrape_all(stores=stores)
         return scraper.scrape_all(categories=categories)
     except ImportError as e:
         print(f"[!] {site_name}: Missing dependency — {e}")
@@ -78,7 +84,8 @@ def main():
     print("=" * 65)
     print()
     print("  Sites: licbplus, wifidjelfa, tiza, geekzone, digitec,")
-    print("         gigastore, gamingdz, lahlou, hardsoft")
+    print("         gigastore, gamingdz, lahlou, hardsoft, matos,")
+    print("         ouedkniss (13 stores)")
     print()
 
     # Determine sites to scrape
@@ -105,7 +112,7 @@ def main():
             print(f"{'─' * 55}")
             print(f"  SCRAPING: {site.upper()}")
             print(f"{'─' * 55}")
-            products = scrape_site(site, categories=args.cats)
+            products = scrape_site(site, categories=args.cats, stores=OUEDKNISS_STORES if site == 'ouedkniss' else None)
             raw_products.extend(products)
 
             if args.save_raw and products:

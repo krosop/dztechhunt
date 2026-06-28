@@ -29,9 +29,9 @@ export default function NavigationBar() {
   }, [mobileOpen]);
 
   const navLinks = [
-    { label: t.nav_deals, href: '/#deals', badge: 'Live' as const },
-    { label: t.nav_trending, href: '/#trending' },
-    { label: t.nav_how, href: '/#how-it-works' },
+    { label: t.nav_deals, to: '/deals', badge: 'Live' as const },
+    { label: t.nav_trending, to: '/trending' },
+    { label: t.nav_how, to: '/how-it-works' },
   ];
 
   const languages: { code: Lang; label: string }[] = [
@@ -52,16 +52,16 @@ export default function NavigationBar() {
         <div className="w-full page-padding flex items-center justify-between">
           <Link to="/" className="flex items-center gap-0 shrink-0">
             <span className="text-lg sm:text-[22px] font-extrabold text-white tracking-tight">
-              Price<span className="text-[#00d4aa]">Zap</span>
+              DZ<span className="text-[#00d4aa]">TechHunt</span>
             </span>
             <span className="ml-1.5 text-[9px] sm:text-[10px] font-semibold text-[#4a5568] uppercase tracking-wider">DZ</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
+              <Link
+                key={link.to}
+                to={link.to}
                 className="relative text-sm font-medium text-[#7a8a9e] hover:text-white transition-colors duration-150 group flex items-center gap-2"
               >
                 {'badge' in link && link.badge && (
@@ -72,7 +72,7 @@ export default function NavigationBar() {
                 )}
                 {link.label}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#00d4aa] transition-all duration-150 group-hover:w-full" />
-              </a>
+              </Link>
             ))}
           </div>
 
@@ -115,9 +115,12 @@ export default function NavigationBar() {
               </AnimatePresence>
             </div>
 
-            <button className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#131b26] border border-[#1a2332] flex items-center justify-center hover:border-[#00d4aa]/50 hover:text-[#00d4aa] text-[#7a8a9e] transition-all duration-200 active:scale-95">
+            <Link
+              to="/search"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#131b26] border border-[#1a2332] flex items-center justify-center hover:border-[#00d4aa]/50 hover:text-[#00d4aa] text-[#7a8a9e] transition-all duration-200 active:scale-95"
+            >
               <Search className="w-4 h-4" />
-            </button>
+            </Link>
             <button
               className="md:hidden w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-[#7a8a9e] rounded-lg bg-[#131b26] border border-[#1a2332] active:scale-95 transition-transform"
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -153,9 +156,9 @@ export default function NavigationBar() {
               </div>
               <div className="p-4 flex flex-col gap-1">
                 {navLinks.map((link) => (
-                  <a
-                    key={link.href}
-                    href={link.href}
+                  <Link
+                    key={link.to}
+                    to={link.to}
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 text-[15px] font-medium text-[#7a8a9e] hover:text-white hover:bg-[#1a2332] px-4 py-3.5 rounded-lg transition-all active:bg-[#1a2332]"
                   >
@@ -165,7 +168,7 @@ export default function NavigationBar() {
                       </span>
                     )}
                     {link.label}
-                  </a>
+                  </Link>
                 ))}
               </div>
 

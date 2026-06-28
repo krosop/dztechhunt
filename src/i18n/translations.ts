@@ -7,7 +7,7 @@ export const translations = {
     nav_trending: 'Trending',
     nav_how: 'How It Works',
     nav_menu: 'Menu',
-    nav_footer: 'PriceZap DZ — Algeria\'s #1 PC Price Comparison',
+    nav_footer: 'DZ TechHunt DZ — Algeria\'s #1 PC Price Comparison',
 
     // Language switcher
     lang_en: 'EN',
@@ -23,7 +23,7 @@ export const translations = {
     hero_browse: 'Browse Prices',
     hero_badge_trust: 'Trusted & Verified',
     hero_badge_live: 'Live Prices',
-    hero_badge_data: 'dztechhunt Data',
+    hero_badge_data: 'DZ TechHunt Data',
 
     // Live Deals
     deals_title: 'Live Deals',
@@ -83,6 +83,43 @@ export const translations = {
     dt_price_mobile: 'Price',
     dt_savings_mobile: 'Save',
     dt_boutique: 'Store',
+
+    // Page titles
+    page_deals_title: 'All Deals',
+    page_deals_desc: 'Browse all current deals and price drops on PC components from Algerian stores.',
+    page_trending_title: 'Trending Products',
+    page_trending_desc: 'The most compared and searched PC products across Algerian stores right now.',
+    page_hiw_title: 'How It Works',
+    page_hiw_desc: '3 steps to save on your next PC build. No account, no fees, no hassle.',
+    page_breadcrumb_deals: 'Deals',
+    page_breadcrumb_trending: 'Trending',
+    page_breadcrumb_hiw: 'How It Works',
+
+    // Search Page
+    search_title: 'Search Products',
+    search_results_for: 'Results for',
+    search_products_found: 'products found',
+    search_showing: 'showing',
+    search_clear: 'Clear',
+    search_no_results: 'No products found',
+    search_no_results_desc: "We couldn't find anything matching",
+    search_try_different: 'Try checking your spelling or browse one of the categories below.',
+    search_start_typing: 'Type and press Enter to search',
+    search_start_desc: 'Search across {count} listings from {stores} stores.',
+    search_suggestions: 'Suggestions',
+    search_did_you_mean: 'Did you mean?',
+    search_popular: 'Popular products',
+    search_popular_category: 'Popular in this category',
+    search_browse_category: 'Browse by category',
+    search_trending: 'Trending searches',
+    search_load_more: 'Load more',
+    search_remaining: 'remaining',
+    search_sort_relevance: 'Relevance',
+    search_sort_price_asc: 'Price: Low to High',
+    search_sort_price_desc: 'Price: High to Low',
+    search_sort_savings: 'Biggest Savings',
+    search_all: 'All',
+    search_filter: 'Filter',
   },
 
   fr: {
@@ -91,7 +128,7 @@ export const translations = {
     nav_trending: 'Tendance',
     nav_how: 'Comment ça marche',
     nav_menu: 'Menu',
-    nav_footer: 'PriceZap DZ — Comparateur de prix PC #1 en Algérie',
+    nav_footer: 'DZ TechHunt DZ — Comparateur de prix PC #1 en Algérie',
 
     // Language switcher
     lang_en: 'EN',
@@ -107,7 +144,7 @@ export const translations = {
     hero_browse: 'Voir les prix',
     hero_badge_trust: 'Fiable & Vérifié',
     hero_badge_live: 'Prix en Direct',
-    hero_badge_data: 'Données dztechhunt',
+    hero_badge_data: 'Données DZ TechHunt',
 
     // Live Deals
     deals_title: 'Promos en Cours',
@@ -167,6 +204,43 @@ export const translations = {
     dt_price_mobile: 'Prix',
     dt_savings_mobile: 'Éco',
     dt_boutique: 'Boutique',
+
+    // Page titles
+    page_deals_title: 'Toutes les Promos',
+    page_deals_desc: 'Parcours toutes les promotions et baisses de prix sur les composants PC des boutiques algériennes.',
+    page_trending_title: 'Produits Tendance',
+    page_trending_desc: 'Les produits PC les plus comparés et recherchés chez les boutiques algériennes en ce moment.',
+    page_hiw_title: 'Comment ça marche',
+    page_hiw_desc: '3 étapes pour économiser sur ta prochaine config. Pas de compte, pas de frais, pas de complication.',
+    page_breadcrumb_deals: 'Promos',
+    page_breadcrumb_trending: 'Tendance',
+    page_breadcrumb_hiw: 'Comment ça marche',
+
+    // Search Page
+    search_title: 'Rechercher des produits',
+    search_results_for: 'Résultats pour',
+    search_products_found: 'produits trouvés',
+    search_showing: 'affichés',
+    search_clear: 'Effacer',
+    search_no_results: 'Aucun produit trouvé',
+    search_no_results_desc: "Nous n'avons trouvé aucun résultat pour",
+    search_try_different: 'Vérifiez votre orthographe ou parcourez les catégories ci-dessous.',
+    search_start_typing: 'Tapez et appuyez sur Entrée pour rechercher',
+    search_start_desc: 'Recherchez parmi {count} annonces de {stores} boutiques.',
+    search_suggestions: 'Suggestions',
+    search_did_you_mean: 'Vouliez-vous dire ?',
+    search_popular: 'Produits populaires',
+    search_popular_category: 'Populaires dans cette catégorie',
+    search_browse_category: 'Parcourir par catégorie',
+    search_trending: 'Recherches tendance',
+    search_load_more: 'Voir plus',
+    search_remaining: 'restant',
+    search_sort_relevance: 'Pertinence',
+    search_sort_price_asc: 'Prix : croissant',
+    search_sort_price_desc: 'Prix : décroissant',
+    search_sort_savings: 'Plus grandes économies',
+    search_all: 'Tout',
+    search_filter: 'Filtre',
   },
 
   ar: {
@@ -175,7 +249,7 @@ export const translations = {
     nav_trending: 'الأكثر بحثاً',
     nav_how: 'كيف يعمل',
     nav_menu: 'القائمة',
-    nav_footer: 'PriceZap DZ — أول منصة لمقارنة أسعار PC في الجزائر',
+    nav_footer: 'DZ TechHunt DZ — أول منصة لمقارنة أسعار PC في الجزائر',
 
     // Language switcher
     lang_en: 'EN',
@@ -191,7 +265,7 @@ export const translations = {
     hero_browse: 'تصفح الأسعار',
     hero_badge_trust: 'موثوق ومجرب',
     hero_badge_live: 'أسعار فورية',
-    hero_badge_data: 'بيانات dztechhunt',
+    hero_badge_data: 'بيانات DZ TechHunt',
 
     // Live Deals
     deals_title: 'عروض حالية',
@@ -251,6 +325,43 @@ export const translations = {
     dt_price_mobile: 'السعر',
     dt_savings_mobile: 'وفّر',
     dt_boutique: 'المتجر',
+
+    // Page titles
+    page_deals_title: 'جميع العروض',
+    page_deals_desc: 'تصفح جميع العروض الحالية وانخفاضات الأسعار على مكونات PC من المتاجر الجزائرية.',
+    page_trending_title: 'المنتجات الرائجة',
+    page_trending_desc: 'أكثر منتجات PC مقارنة وبحثاً عبر المتاجر الجزائرية حالياً.',
+    page_hiw_title: 'كيف يعمل',
+    page_hiw_desc: '3 خطوات للتوفير في بنيتك القادمة. لا حساب، لا رسوم، لا تعقيد.',
+    page_breadcrumb_deals: 'العروض',
+    page_breadcrumb_trending: 'الأكثر بحثاً',
+    page_breadcrumb_hiw: 'كيف يعمل',
+
+    // Search Page
+    search_title: 'البحث عن منتجات',
+    search_results_for: 'نتائج البحث عن',
+    search_products_found: 'منتج موجود',
+    search_showing: 'معروض',
+    search_clear: 'مسح',
+    search_no_results: 'لا توجد منتجات',
+    search_no_results_desc: 'لم نجد شيئاً يطابق',
+    search_try_different: 'تحقق من الإملاء أو تصفح الفئات أدناه.',
+    search_start_typing: 'اكتب واضغط Enter للبحث',
+    search_start_desc: 'ابحث بين {count} عرض من {stores} متجر.',
+    search_suggestions: 'اقتراحات',
+    search_did_you_mean: 'هل تقصد؟',
+    search_popular: 'منتجات شائعة',
+    search_popular_category: 'شائعة في هذا التصنيف',
+    search_browse_category: 'تصفح حسب التصنيف',
+    search_trending: 'عمليات البحث الرائجة',
+    search_load_more: 'عرض المزيد',
+    search_remaining: 'متبقي',
+    search_sort_relevance: 'الأكثر تطابقاً',
+    search_sort_price_asc: 'السعر: من الأقل',
+    search_sort_price_desc: 'السعر: من الأعلى',
+    search_sort_savings: 'أكبر توفير',
+    search_all: 'الكل',
+    search_filter: 'تصفية',
   },
 } as const;
 
