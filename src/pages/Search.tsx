@@ -277,13 +277,13 @@ export default function SearchPage() {
 
   const hasMore = paginatedResults.length < searchResults.length;
 
-  // Spell correction for zero results
+  // Spell correction — always compute when query exists (not just for zero results)
   const correction = useMemo(() => {
-    if (query.trim() && searchResults.length === 0 && !loading && loaded) {
+    if (query.trim() && !loading && loaded) {
       return suggestCorrection(query, allProducts);
     }
     return null;
-  }, [query, searchResults.length, loading, loaded, allProducts]);
+  }, [query, loading, loaded, allProducts]);
 
   // Search suggestions (debounced)
   const suggestions = useMemo(() => {
@@ -589,6 +589,29 @@ export default function SearchPage() {
               </button>
             )}
           </div>
+
+          {/* Did you mean? — shown when results exist but a correction was found */}
+          {correction && correction.confidence > 0.5 && hasResults && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 sm:mb-5"
+            >
+              <div className="inline-flex items-center gap-3 bg-[#00d4aa]/5 border border-[#00d4aa]/15 rounded-xl px-4 py-2.5">
+                <Lightbulb className="w-4 h-4 text-[#00d4aa]/60 shrink-0" />
+                <span className="text-[13px] text-[#7a8a9e]">
+                  {t.search_did_you_mean}{' '}
+                  <button
+                    onClick={() => applyCorrection(correction.correctedQuery)}
+                    className="font-semibold text-[#00d4aa] hover:underline underline-offset-2"
+                  >
+                    {correction.correctedQuery}
+                  </button>
+                  ?
+                </span>
+              </div>
+            </motion.div>
+          )}
 
           {/* Results grid */}
           {loading || !loaded ? (

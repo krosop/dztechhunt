@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Monitor, Cpu, HardDrive, MemoryStick, Zap, Box, Fan, Gamepad2, Headphones, Keyboard, Mouse, Laptop, Disc } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Monitor, Cpu, HardDrive, MemoryStick, Zap, Box, Fan, Gamepad2, Headphones, Keyboard, Mouse, Laptop, Disc, ImageOff } from 'lucide-react';
 
 interface CategoryImageProps {
   category: string;
@@ -8,6 +8,7 @@ interface CategoryImageProps {
   productName: string;
   src: string;
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 const CATEGORY_ICONS: Record<string, any> = {
@@ -44,52 +45,117 @@ const CATEGORY_COLORS: Record<string, string> = {
   'default': '#374151',
 };
 
-export default function CategoryImage({ category, storeName, storeColor, productName, src, className }: CategoryImageProps) {
+const CATEGORY_BG: Record<string, string> = {
+  'graphics-cards': 'radial-gradient(circle at 30% 30%, rgba(0,212,170,0.08) 0%, transparent 60%)',
+  'processors': 'radial-gradient(circle at 30% 30%, rgba(0,180,216,0.08) 0%, transparent 60%)',
+  'memory': 'radial-gradient(circle at 30% 30%, rgba(255,107,107,0.08) 0%, transparent 60%)',
+  'storage': 'radial-gradient(circle at 30% 30%, rgba(255,217,61,0.08) 0%, transparent 60%)',
+  'monitors': 'radial-gradient(circle at 30% 30%, rgba(168,85,247,0.08) 0%, transparent 60%)',
+  'cases': 'radial-gradient(circle at 30% 30%, rgba(74,222,128,0.08) 0%, transparent 60%)',
+  'power-supplies': 'radial-gradient(circle at 30% 30%, rgba(249,115,22,0.08) 0%, transparent 60%)',
+  'cooling': 'radial-gradient(circle at 30% 30%, rgba(34,211,238,0.08) 0%, transparent 60%)',
+  'headset': 'radial-gradient(circle at 30% 30%, rgba(236,72,153,0.08) 0%, transparent 60%)',
+  'keyboard': 'radial-gradient(circle at 30% 30%, rgba(59,130,246,0.08) 0%, transparent 60%)',
+  'mouse': 'radial-gradient(circle at 30% 30%, rgba(20,184,166,0.08) 0%, transparent 60%)',
+  'laptop': 'radial-gradient(circle at 30% 30%, rgba(139,92,246,0.08) 0%, transparent 60%)',
+  'pc-parts': 'radial-gradient(circle at 30% 30%, rgba(107,114,128,0.08) 0%, transparent 60%)',
+  'default': 'radial-gradient(circle at 30% 30%, rgba(55,65,81,0.08) 0%, transparent 60%)',
+};
+
+export default function CategoryImage({ category, storeName, storeColor, productName, src, className, size = 'md' }: CategoryImageProps) {
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
-  const isPlaceholder = !src || src.includes('product-pc-case') || error;
+  const hasSrc = src && src.length > 10 && !src.includes('product-pc-case');
+  const isPlaceholder = !hasSrc || error;
   const catKey = CATEGORY_ICONS[category] ? category : 'default';
   const Icon = CATEGORY_ICONS[catKey] || CATEGORY_ICONS.default;
   const catColor = CATEGORY_COLORS[catKey] || CATEGORY_COLORS.default;
+  const bgGradient = CATEGORY_BG[catKey] || CATEGORY_BG.default;
+
+  // Reset states when src changes (critical for reused cards in lists)
+  useEffect(() => {
+    setError(false);
+    setLoaded(false);
+  }, [src]);
+
+  const iconSize = size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-16 h-16 sm:w-20 sm:h-20' : 'w-12 h-12 sm:w-16 sm:h-16';
+  const textSize = size === 'sm' ? 'text-[9px]' : 'text-[10px] sm:text-xs';
 
   if (isPlaceholder) {
     return (
-      <div className={`${className} flex flex-col items-center justify-center bg-[#0d131c] relative`}>
-        <div className="flex flex-col items-center justify-center p-4 text-center">
-          <Icon className="w-12 h-12 sm:w-16 sm:h-16 mb-2 opacity-40" style={{ color: catColor }} />
-          <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-[#4a5568] mb-1">
+      <div
+        className={`${className} relative overflow-hidden`}
+        style={{ background: `linear-gradient(135deg, #0d131c 0%, #111821 100%)` }}
+      >
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 opacity-60" style={{ background: bgGradient }} />
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: `linear-gradient(${catColor} 1px, transparent 1px), linear-gradient(90deg, ${catColor} 1px, transparent 1px)`,
+          backgroundSize: '20px 20px',
+        }} />
+
+        {/* Icon */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-4">
+          <div
+            className="rounded-xl p-2.5 sm:p-3 mb-2 sm:mb-3 border border-[#1a2332]"
+            style={{ backgroundColor: `${catColor}10` }}
+          >
+            {error ? (
+              <ImageOff className={`${iconSize} opacity-30`} style={{ color: catColor }} />
+            ) : (
+              <Icon className={`${iconSize} opacity-30`} style={{ color: catColor }} />
+            )}
+          </div>
+          
+          <span className={`${textSize} font-semibold uppercase tracking-[0.08em] opacity-40`} style={{ color: catColor }}>
             {category.replace(/-/g, ' ')}
           </span>
-          <span className="text-[10px] text-[#5a6a7e] line-clamp-2 leading-tight">
+          
+          <span className="text-[9px] sm:text-[10px] text-[#4a5568] mt-1 leading-tight text-center px-2 line-clamp-2">
             {productName}
           </span>
         </div>
+
         {/* Store badge */}
-        <div 
-          className="absolute bottom-2 left-2 right-2 text-[10px] font-medium px-2 py-1 rounded text-center truncate"
-          style={{ backgroundColor: `${storeColor}20`, color: storeColor }}
-        >
-          {storeName}
+        <div className="absolute bottom-2 left-2 right-2 flex justify-center">
+          <span
+            className="text-[9px] sm:text-[10px] font-semibold px-2.5 py-1 rounded-lg border border-[#1a2332] truncate max-w-full"
+            style={{ backgroundColor: `${storeColor}15`, color: storeColor, borderColor: `${storeColor}25` }}
+          >
+            {storeName}
+          </span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`${className} bg-[#0d131c] relative`}>
+    <div className={`${className} bg-[#0d131c] relative overflow-hidden`}>
       <img
         src={src}
         alt={productName}
-        className={`w-full h-full object-contain p-2 transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        referrerPolicy="no-referrer"
+        className={`w-full h-full object-contain p-2 transition-opacity duration-500 ease-out ${loaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
         loading="lazy"
+        decoding="async"
       />
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <Icon className="w-10 h-10 opacity-20 animate-pulse" style={{ color: catColor }} />
+          <div className="rounded-xl p-3 border border-[#1a2332]" style={{ backgroundColor: `${catColor}08` }}>
+            <Icon className="w-10 h-10 sm:w-14 sm:h-14 opacity-20 animate-pulse" style={{ color: catColor }} />
+          </div>
         </div>
+      )}
+      {/* Subtle vignette when loaded */}
+      {loaded && (
+        <div className="absolute inset-0 pointer-events-none" style={{
+          boxShadow: 'inset 0 0 30px 10px rgba(13,19,28,0.3)',
+        }} />
       )}
     </div>
   );

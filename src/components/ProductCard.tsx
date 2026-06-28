@@ -46,6 +46,7 @@ export default function ProductCard({ product, index = 0, query, animate = true 
   const savingsPercent = product.original_price > 0
     ? Math.round((product.savings / product.original_price) * 100)
     : 0;
+  const hasDiscount = product.original_price > product.current_price && product.savings > 0;
 
   const segments = query ? highlightMatches(product.product_name, query) : null;
 
@@ -76,14 +77,20 @@ export default function ProductCard({ product, index = 0, query, animate = true 
           />
         </div>
 
-        <span
-          className="inline-block text-[10px] sm:text-[12px] font-semibold uppercase tracking-[0.06em] px-2 sm:px-3 py-1 sm:py-1.5 rounded-md mb-2 sm:mb-2.5"
-          style={{ color: product.store_color, backgroundColor: `${product.store_color}15` }}
-        >
-          {product.product_brand}
-        </span>
+        {/* Top row: brand + store badge */}
+        <div className="flex items-center gap-2 mb-2 sm:mb-2.5">
+          <span
+            className="inline-block text-[10px] sm:text-[12px] font-semibold uppercase tracking-[0.06em] px-2 sm:px-3 py-1 sm:py-1.5 rounded-md truncate"
+            style={{ color: product.store_color, backgroundColor: `${product.store_color}15` }}
+          >
+            {product.product_brand}
+          </span>
+          <span className="text-[10px] text-[#4a5568] truncate">
+            {product.store_name}
+          </span>
+        </div>
 
-        <h3 className="text-sm sm:text-base font-semibold text-[#c8d0d9] group-hover:text-white truncate mb-2 sm:mb-2.5 leading-snug transition-colors">
+        <h3 className="text-sm sm:text-base font-semibold text-[#c8d0d9] group-hover:text-white truncate mb-2 sm:mb-2.5 leading-snug transition-colors min-h-[2.5rem] sm:min-h-[3rem]">
           {segments ? <HighlightedTitle segments={segments} /> : product.product_name}
         </h3>
 
@@ -91,21 +98,30 @@ export default function ProductCard({ product, index = 0, query, animate = true 
           <span className="text-lg sm:text-xl font-bold text-[#00d4aa]">
             {fmtDZD(product.current_price)}
           </span>
-          {product.original_price > product.current_price && (
+          {hasDiscount && (
             <span className="text-[11px] sm:text-[13px] text-[#4a5568] line-through">
               {fmtDZD(product.original_price)}
             </span>
           )}
         </div>
 
-        {savingsPercent > 0 && (
-          <div className="flex items-center justify-between">
+        {/* Bottom row: savings + stock */}
+        <div className="flex items-center justify-between">
+          {hasDiscount ? (
             <span className="text-[10px] sm:text-[12px] font-semibold text-[#00d4aa] bg-[#00d4aa]/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded">
               {t.save} {savingsPercent}%
             </span>
-            <span className="text-[10px] sm:text-[12px] text-[#4a5568]">{t.at_store} {product.store_name}</span>
-          </div>
-        )}
+          ) : (
+            <span className="text-[10px] sm:text-[12px] text-[#4a5568]">
+              {product.store_name}
+            </span>
+          )}
+          {product.stock_status && product.stock_status !== 'متوفر' && (
+            <span className="text-[10px] text-[#f59e0b]">
+              {product.stock_status}
+            </span>
+          )}
+        </div>
 
         <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[#1a2332]">
           <StarRating rating={product.product_rating} size={12} reviewCount={product.product_review_count} />
