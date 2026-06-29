@@ -1,23 +1,69 @@
-name: Deploy to Vercel
+name: Deploy to Vercel (Manual Backup)
+#
+# MANUAL BACKUP DEPLOYMENT
+# This workflow is a backup for when Vercel auto-deploy fails.
+# The normal flow is: scrape.yml commits data → Vercel auto-deploys automatically.
+#
+# REQUIRED SECRETS (set in GitHub Settings → Secrets → Actions):
+#   VERCEL_TOKEN      — from Vercel Account Settings → Tokens
+#   VERCEL_ORG_ID     — from your Vercel dashboard URL: vercel.com/<org-id>
+#   VERCEL_PROJECT_ID — from Vercel Project Settings → General
+#
+
 on:
-  workflow_dispatch: # Manual trigger only — Vercel auto-deploy handles pushes
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment target'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+
 jobs:
-  deploy:
+  check-secrets:
+    name: Verify Vercel Secrets
     runs-on: ubuntu-latest
     steps:
+      - name: Check required secrets
+        run: |
+          missing=""
+          [ -z "${{ secrets.VERCEL_TOKEN }}" ] && missing="VERCEL_TOKEN $missing"
+          [ -z "${{ secrets.VERCEL_ORG_ID }}" ] && missing="VERCEL_ORG_ID $missing"
+          [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ] && missing="VERCEL_PROJECT_ID $missing"
+          if [ -n "$missing" ]; then
+            echo "❌ MISSING SECRETS: $missing"
+            echo ""
+            echo "Set these in GitHub: Settings → Secrets → Actions"
+            echo "Get them from Vercel: https://vercel.com/account/tokens"
+            exit 1
+          fi
+          echo "✅ All Vercel secrets configured"
+
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    needs: check-secrets
+    steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
+
       - name: Build
         run: npm run build
+
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: ${{ github.event.inputs.environment == 'production' && '--prod' || '' }}
           working-directory: ./
