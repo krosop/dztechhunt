@@ -1,72 +1,98 @@
 import { useState, useEffect, useRef } from 'react';
 
-const imageCache = new Map<string, string>();
+const imageCache = new Map<string, string | null>();
 const pendingRequests = new Map<string, Promise<string | null>>();
+
+// SearchAPI.io key — free tier: 100 searches/month
+const SEARCHAPI_KEY = 'SDLn9wHvG9fUTBJxKXkLE1X5';
 
 /** Build a proxied image URL that handles CORS, caching, and resizing */
 export function proxiedImageUrl(originalUrl: string, width: number = 300): string | null {
   if (!originalUrl || originalUrl.length < 10) return null;
-  
+
   // Already proxied — don't double-proxy
   if (originalUrl.includes('weserv.nl') || originalUrl.includes('wsrv.nl')) {
     return originalUrl;
   }
-  
+
   // Data URIs — pass through
   if (originalUrl.startsWith('data:')) return originalUrl;
-  
+
   // Use weserv.nl proxy (free, global CDN, handles CORS, caches images)
-  // Parameters: w=width, q=quality, output=webp for smaller size
   try {
     const encoded = encodeURIComponent(originalUrl);
     return `https://images.weserv.nl/?url=${encoded}&w=${width}&q=85&output=webp&n=-1&we`;
   } catch {
-    return originalUrl; // fallback to original if encoding fails
+    return originalUrl;
   }
 }
 
-/** Check if an image URL is available (HEAD request) */
-export async function checkImageAvailable(url: string): Promise<boolean> {
-  if (!url || url.length < 10) return false;
-  
-  const cacheKey = `avail_${url}`;
-  if (imageCache.has(cacheKey)) {
-    return imageCache.get(cacheKey) === 'ok';
-  }
-  
+/** Search Google Images via SearchAPI.io for a product name */
+async function searchGoogleImages(query: string): Promise<string | null> {
+  const cacheKey = `searchapi_${query.trim().toLowerCase().replace(/[^\w\d]+/g, '_').substring(0, 40)}`;
+
+  // Check localStorage cache (7 days)
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    
-    const res = await fetch(url, { 
-      method: 'HEAD', 
-      mode: 'no-cors',
-      signal: controller.signal 
-    });
-    
-    clearTimeout(timeout);
-    imageCache.set(cacheKey, 'ok');
-    return true;
-  } catch {
-    imageCache.set(cacheKey, 'fail');
-    return false;
+    const stored = localStorage.getItem(cacheKey);
+    if (stored) {
+      const { url, timestamp } = JSON.parse(stored);
+      if (Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000) {
+        return url;
+      }
+    }
+  } catch { /* ignore */ }
+
+  // Deduplicate in-flight requests
+  if (pendingRequests.has(cacheKey)) {
+    return pendingRequests.get(cacheKey)!;
   }
+
+  const request = fetch(
+    `https://www.searchapi.io/api/v1/search?engine=google_images&q=${encodeURIComponent(query)}&api_key=${SEARCHAPI_KEY}&num=3`
+  )
+    .then(async (res) => {
+      if (!res.ok) return null;
+      const data = await res.json();
+      const images = data.images || data.images_results || data.image_results || [];
+      
+      // Find first valid image URL
+      for (const img of images) {
+        const url = img.original?.link || img.original || img.thumbnail;
+        if (url && url.length > 10 && url.startsWith('http')) {
+          // Cache result
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify({ url, timestamp: Date.now() }));
+          } catch { /* ignore */ }
+          return url;
+        }
+      }
+      return null;
+    })
+    .catch(() => null)
+    .finally(() => {
+      pendingRequests.delete(cacheKey);
+    });
+
+  pendingRequests.set(cacheKey, request);
+  return request;
 }
 
 /** Preload images in batches — called from page components */
-export async function preloadProductImages(imageUrls: string[]): Promise<void> {
-  // Just trigger browser preloading via Image objects
-  const uniqueUrls = [...new Set(imageUrls.filter(u => u && u.length > 10))];
-  
+export async function preloadProductImages(items: { name: string; image?: string | null }[]): Promise<void> {
+  // Just trigger browser preloading for existing images
+  const existingUrls = items
+    .map(i => i.image)
+    .filter((u): u is string => !!u && u.length > 10);
+
   const BATCH_SIZE = 10;
-  for (let i = 0; i < uniqueUrls.length; i += BATCH_SIZE) {
-    const batch = uniqueUrls.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < existingUrls.length; i += BATCH_SIZE) {
+    const batch = existingUrls.slice(i, i + BATCH_SIZE);
     await Promise.all(
-      batch.map(url => 
+      batch.map(url =>
         new Promise<void>((resolve) => {
           const img = new Image();
           img.onload = () => resolve();
-          img.onerror = () => resolve(); // Don't block on errors
+          img.onerror = () => resolve();
           img.src = proxiedImageUrl(url) || url;
         })
       )
@@ -80,19 +106,47 @@ export function useProductImage(productName: string, imageUrl: string | null | u
   const fetched = useRef(false);
 
   useEffect(() => {
-    // If we already have an image URL, proxy it
+    // If we already have a store image URL, proxy it and we're done
     if (imageUrl && imageUrl.length > 10) {
       const proxied = proxiedImageUrl(imageUrl);
       setResolvedUrl(proxied);
       return;
     }
-    
-    // No image URL available — resolvedUrl stays null, component will show placeholder
+
+    // No store image — try Google Images search
     if (!productName || fetched.current) return;
     fetched.current = true;
-    
-    // No fallback search — just accept there's no image
-    setResolvedUrl(null);
+
+    const name = productName.trim();
+    if (name.length < 3) {
+      setResolvedUrl(null);
+      return;
+    }
+
+    // Check if we already searched this product
+    const cacheKey = `searchapi_${name.toLowerCase().replace(/[^\w\d]+/g, '_').substring(0, 40)}`;
+    try {
+      const stored = localStorage.getItem(cacheKey);
+      if (stored) {
+        const { url } = JSON.parse(stored);
+        if (url) {
+          setResolvedUrl(proxiedImageUrl(url));
+          return;
+        }
+      }
+    } catch { /* ignore */ }
+
+    setLoading(true);
+
+    searchGoogleImages(name)
+      .then((url) => {
+        if (url) {
+          setResolvedUrl(proxiedImageUrl(url));
+        } else {
+          setResolvedUrl(null);
+        }
+      })
+      .finally(() => setLoading(false));
   }, [productName, imageUrl]);
 
   return { imageUrl: resolvedUrl, loading };
