@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { TrendingUp, Tag, RotateCcw, ChevronDown, Flame } from 'lucide-react';
+import { TrendingUp, Tag, RotateCcw, Flame } from 'lucide-react';
 import { useData } from '@/components/DataProvider';
 import { useTranslation } from '@/i18n/useTranslation';
 import NavigationBar from '@/components/NavigationBar';
@@ -9,16 +9,14 @@ import ProductCard from '@/components/ProductCard';
 import { CardSkeleton } from '@/components/LoadingSkeleton';
 import SEO from '@/components/SEO';
 
-const PAGE_SIZE = 20;
-
 type TrendingSort = 'reviews-desc' | 'price-asc' | 'price-desc' | 'savings-desc' | 'most-listed';
 
 export default function TrendingPage() {
   const { t, isRTL } = useTranslation();
   const { loaded, loading, allProducts } = useData();
+  // Remove page state, no pagination needed for 15 items
   const [sortBy, setSortBy] = useState<TrendingSort>('reviews-desc');
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [page, setPage] = useState(1);
 
   // Deduplicate by product_id — keep the one with highest reviews
   const uniqueTrending = useMemo(() => {
@@ -75,8 +73,7 @@ export default function TrendingPage() {
     return results;
   }, [uniqueTrending, activeCategory, sortBy, allProducts]);
 
-  const paginated = filtered.slice(0, page * PAGE_SIZE);
-  const hasMore = paginated.length < filtered.length;
+  const paginated = filtered.slice(0, 15);
 
   const sortLabels: Record<TrendingSort, string> = {
     'reviews-desc': t.search_sort_relevance,
@@ -148,7 +145,7 @@ export default function TrendingPage() {
               {categories.map(([slug, name]) => (
                 <button
                   key={slug}
-                  onClick={() => { setActiveCategory(slug); setPage(1); }}
+                  onClick={() => { setActiveCategory(slug); }}
                   className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium whitespace-nowrap transition-all shrink-0 ${
                     activeCategory === slug
                       ? 'bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/30'
@@ -162,7 +159,7 @@ export default function TrendingPage() {
 
             <select
               value={sortBy}
-              onChange={(e) => { setSortBy(e.target.value as TrendingSort); setPage(1); }}
+              onChange={(e) => { setSortBy(e.target.value as TrendingSort); }}
               className="bg-[#131b26] border border-[#1a2332] text-[#c8d0d9] text-[12px] font-medium rounded-lg px-3 py-2 outline-none focus:border-[#00d4aa]/50 cursor-pointer shrink-0"
             >
               {(Object.keys(sortLabels) as TrendingSort[]).map((k) => (
@@ -178,9 +175,9 @@ export default function TrendingPage() {
                 t.loading
               ) : (
                 <>
-                  <span className="text-white font-semibold">{filtered.length.toLocaleString()}</span> {t.search_products_found}
-                  {hasMore && (
-                    <span className="text-[#4a5568] ml-1">({t.search_showing} {paginated.length})</span>
+                  <span className="text-white font-semibold">{Math.min(filtered.length, 15)}</span> {t.search_products_found}
+                  {filtered.length > 15 && (
+                    <span className="text-[#4a5568] ml-1">(top 15)</span>
                   )}
                 </>
               )}
@@ -188,7 +185,7 @@ export default function TrendingPage() {
 
             {activeCategory !== 'all' && (
               <button
-                onClick={() => { setActiveCategory('all'); setPage(1); }}
+                onClick={() => { setActiveCategory('all'); }}
                 className="inline-flex items-center gap-1 text-[11px] text-[#4a5568] hover:text-[#00d4aa] transition-colors"
               >
                 <RotateCcw className="w-3 h-3" /> {t.search_clear}
@@ -210,34 +207,20 @@ export default function TrendingPage() {
               <p className="text-[13px] text-[#5a6a7e]">{t.search_try_different}</p>
             </div>
           ) : (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6"
-              >
-                {paginated.map((product, i) => (
-                  <ProductCard
-                    key={product.product_id}
-                    product={product}
-                    index={i}
-                    animate={false}
-                  />
-                ))}
-              </motion.div>
-
-              {hasMore && (
-                <div className="flex justify-center mt-8">
-                  <button
-                    onClick={() => setPage((p) => p + 1)}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#131b26] border border-[#1a2332] text-[#c8d0d9] text-sm font-medium rounded-xl hover:border-[#00d4aa]/30 hover:text-[#00d4aa] transition-all"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                    {t.search_load_more} ({filtered.length - paginated.length} {t.search_remaining})
-                  </button>
-                </div>
-              )}
-            </>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6"
+            >
+              {paginated.map((product, i) => (
+                <ProductCard
+                  key={product.product_id}
+                  product={product}
+                  index={i}
+                  animate={false}
+                />
+              ))}
+            </motion.div>
           )}
         </section>
       </main>

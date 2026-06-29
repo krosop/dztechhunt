@@ -54,11 +54,11 @@ export default function DealsPage() {
   
   const uniqueDeals = useMemo(() => {
     if (hasRealDeals) {
-      // Only show products with actual savings
-      return dealsProducts.filter(d => d.hasSavings).map(d => d.product);
+      // Only show products with actual savings AND 6+ listings
+      return dealsProducts.filter(d => d.hasSavings && d.listings >= 6).map(d => d.product);
     }
-    // Fallback: show products with 2+ listings (most compared = best deals potential)
-    return dealsProducts.filter(d => d.listings >= 2).map(d => d.product);
+    // Fallback: show products with 6+ listings (most compared = best deals potential)
+    return dealsProducts.filter(d => d.listings >= 6).map(d => d.product);
   }, [dealsProducts, hasRealDeals]);
 
   // Available stores and categories
