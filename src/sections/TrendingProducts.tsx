@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { useData } from '@/components/DataProvider';
 import { useTranslation } from '@/i18n/useTranslation';
 import SectionHeader from '@/components/SectionHeader';
@@ -8,7 +6,7 @@ import HorizontalCarousel from '@/components/HorizontalCarousel';
 import { CardSkeleton } from '@/components/LoadingSkeleton';
 
 export default function TrendingProducts() {
-  const { t, isRTL } = useTranslation();
+  const { t } = useTranslation();
   const { loaded, loading, trending } = useData();
 
   if (loading || !loaded) {
@@ -26,8 +24,6 @@ export default function TrendingProducts() {
     );
   }
 
-  const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
-
   // Deduplicate by product_id so each unique product appears only once
   const uniqueTrending = trending.filter((item, index, self) =>
     index === self.findIndex((t) => t.product_id === item.product_id)
@@ -40,15 +36,6 @@ export default function TrendingProducts() {
           eyebrow={t.trending_eyebrow}
           title={t.trending_title}
           description={t.trending_desc}
-          rightAction={
-            <Link
-              to="/trending"
-              className="text-sm font-medium text-[#00d4aa] hover:text-[#00d4aa]/80 flex items-center gap-1 cursor-pointer transition-colors"
-              dir={isRTL ? 'rtl' : 'ltr'}
-            >
-              {t.trending_view_all} <ArrowIcon className="w-4 h-4" />
-            </Link>
-          }
         />
       </div>
 

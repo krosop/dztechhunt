@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useData } from '@/components/DataProvider';
 import { fmtDZD } from '@/data/dzProducts';
-import { TrendingDown, ArrowRight } from 'lucide-react';
+import { TrendingDown } from 'lucide-react';
 import { DealSkeleton } from '@/components/LoadingSkeleton';
 import { useTranslation } from '@/i18n/useTranslation';
 
@@ -44,12 +44,6 @@ export default function LiveDealsBanner() {
             <TrendingDown className="w-4 h-4 text-[#00d4aa]" />
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider">{t.deals_title}</h3>
           </div>
-          <Link
-            to="/deals"
-            className="text-sm font-medium text-[#00d4aa] hover:text-[#00d4aa]/80 flex items-center gap-1 transition-colors"
-          >
-            View All <ArrowRight className="w-4 h-4" />
-          </Link>
         </div>
       </motion.div>
 

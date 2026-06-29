@@ -29,8 +29,6 @@ export default function NavigationBar() {
   }, [mobileOpen]);
 
   const navLinks = [
-    { label: t.nav_deals, to: '/deals', badge: 'Live' as const },
-    { label: t.nav_trending, to: '/trending' },
     { label: t.nav_how, to: '/how-it-works' },
   ];
 
@@ -62,14 +60,8 @@ export default function NavigationBar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className="relative text-sm font-medium text-[#7a8a9e] hover:text-white transition-colors duration-150 group flex items-center gap-2"
+                className="relative text-sm font-medium text-[#7a8a9e] hover:text-white transition-colors duration-150 group"
               >
-                {'badge' in link && link.badge && (
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00d4aa] opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00d4aa]"></span>
-                  </span>
-                )}
                 {link.label}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#00d4aa] transition-all duration-150 group-hover:w-full" />
               </Link>
@@ -162,11 +154,6 @@ export default function NavigationBar() {
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 text-[15px] font-medium text-[#7a8a9e] hover:text-white hover:bg-[#1a2332] px-4 py-3.5 rounded-lg transition-all active:bg-[#1a2332]"
                   >
-                    {'badge' in link && link.badge && (
-                      <span className="relative flex h-2 w-2">
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00d4aa]"></span>
-                      </span>
-                    )}
                     {link.label}
                   </Link>
                 ))}
