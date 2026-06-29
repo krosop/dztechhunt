@@ -29,8 +29,6 @@ export function proxiedImageUrl(originalUrl: string, width: number = 300): strin
 
 /** Search Google Images via SearchAPI.io for a product name */
 async function searchGoogleImages(query: string): Promise<string | null> {
-  console.log('[SearchAPI] Searching for:', query.substring(0, 60));
-  
   const cacheKey = `searchapi_${query.trim().toLowerCase().replace(/[^\w\d]+/g, '_').substring(0, 40)}`;
 
   // Check localStorage cache (7 days)
@@ -39,7 +37,6 @@ async function searchGoogleImages(query: string): Promise<string | null> {
     if (stored) {
       const { url, timestamp } = JSON.parse(stored);
       if (Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000) {
-        console.log('[SearchAPI] Cache hit for:', query.substring(0, 40));
         return url;
       }
     }
@@ -47,7 +44,6 @@ async function searchGoogleImages(query: string): Promise<string | null> {
 
   // Deduplicate in-flight requests
   if (pendingRequests.has(cacheKey)) {
-    console.log('[SearchAPI] Reusing pending request for:', query.substring(0, 40));
     return pendingRequests.get(cacheKey)!;
   }
 
@@ -55,17 +51,14 @@ async function searchGoogleImages(query: string): Promise<string | null> {
     `https://www.searchapi.io/api/v1/search?engine=google_images&q=${encodeURIComponent(query)}&api_key=${SEARCHAPI_KEY}&num=3`
   )
     .then(async (res) => {
-      console.log('[SearchAPI] Response status:', res.status);
       if (!res.ok) return null;
       const data = await res.json();
       const images = data.images || data.images_results || data.image_results || [];
-      console.log('[SearchAPI] Found', images.length, 'images for:', query.substring(0, 40));
       
       // Find first valid image URL
       for (const img of images) {
         const url = img.original?.link || img.original || img.thumbnail;
         if (url && url.length > 10 && url.startsWith('http')) {
-          console.log('[SearchAPI] Using image:', url.substring(0, 60));
           // Cache result
           try {
             localStorage.setItem(cacheKey, JSON.stringify({ url, timestamp: Date.now() }));
@@ -73,13 +66,9 @@ async function searchGoogleImages(query: string): Promise<string | null> {
           return url;
         }
       }
-      console.log('[SearchAPI] No valid image found for:', query.substring(0, 40));
       return null;
     })
-    .catch((err) => {
-      console.error('[SearchAPI] Error:', err.message);
-      return null;
-    })
+    .catch(() => null)
     .finally(() => {
       pendingRequests.delete(cacheKey);
     });
@@ -117,26 +106,19 @@ export function useProductImage(productName: string, imageUrl: string | null | u
   const fetched = useRef(false);
 
   useEffect(() => {
-    console.log('[useProductImage] effect run. productName:', productName?.substring(0, 40), 'imageUrl:', imageUrl?.substring(0, 40) || 'null', 'fetched:', fetched.current);
-    
     // If we already have a store image URL, proxy it and we're done
     if (imageUrl && imageUrl.length > 10) {
       const proxied = proxiedImageUrl(imageUrl);
-      console.log('[useProductImage] Has store image, proxying:', proxied?.substring(0, 60));
       setResolvedUrl(proxied);
       return;
     }
 
     // No store image — try Google Images search
-    if (!productName || fetched.current) {
-      console.log('[useProductImage] Skipping search. hasName:', !!productName, 'fetched:', fetched.current);
-      return;
-    }
+    if (!productName || fetched.current) return;
     fetched.current = true;
 
     const name = productName.trim();
     if (name.length < 3) {
-      console.log('[useProductImage] Name too short:', name);
       setResolvedUrl(null);
       return;
     }
@@ -148,19 +130,16 @@ export function useProductImage(productName: string, imageUrl: string | null | u
       if (stored) {
         const { url } = JSON.parse(stored);
         if (url) {
-          console.log('[useProductImage] Cache hit for:', name.substring(0, 40));
           setResolvedUrl(proxiedImageUrl(url));
           return;
         }
       }
     } catch { /* ignore */ }
 
-    console.log('[useProductImage] Calling searchGoogleImages for:', name.substring(0, 60));
     setLoading(true);
 
     searchGoogleImages(name)
       .then((url) => {
-        console.log('[useProductImage] Search result for', name.substring(0, 40), ':', url ? 'FOUND' : 'NOT FOUND');
         if (url) {
           setResolvedUrl(proxiedImageUrl(url));
         } else {
