@@ -1,10 +1,49 @@
 name: Daily Scrape + Convert (Hybrid Pipeline)
 #
-# HYBRID ARCHITECTURE:
-#   1. This workflow runs daily → scrapes 8 stores → converts data → commits
-#   2. Vercel auto-deploy triggers from the push → deploys frontend + data
-#   3. Manual Vercel deploy workflow is available as backup
+# ═══════════════════════════════════════════════════════════════════════════════
+#  HYBRID SCRAPE ARCHITECTURE — DZ TechHunt
+# ═══════════════════════════════════════════════════════════════════════════════
 #
+#  ┌─────────────────────┐     ┌─────────────────────┐
+#  │  YOUR LOCAL MACHINE │     │   GITHUB ACTIONS    │
+#  │   (run manually)    │     │   (runs daily 3:17) │
+#  └──────────┬──────────┘     └──────────┬──────────┘
+#             │                             │
+#    scrape-ouedkniss-local.py              │
+#    → ouedkniss-raw.json                   │
+#    → merge-ouedkniss.py                    │
+#    → adapter_v2.py (8 stores)              │
+#             │                             │
+#    ─────────┴────────────┬────────────────┘
+#                          │
+#                          ▼
+#              ┌─────────────────────┐
+#              │  public/clean-       │
+#              │  products.json       │
+#              │  public/data/        │
+#              │  products.json       │
+#              └──────────┬──────────┘
+#                         │
+#                         │ git push
+#                         ▼
+#              ┌─────────────────────┐
+#              │      VERCEL         │
+#              │  (auto-deploys on   │
+#              │   every push)       │
+#              └─────────────────────┘
+#
+#  OUEDKNISS → Must run locally (Ouedkniss blocks GitHub Actions IPs)
+#  8 STORES  → Run on GitHub Actions (GeekZone, GamingDZ, LICB Plus, etc.)
+#
+#  LOCAL WORKFLOW (run when you want fresh Ouedkniss data):
+#    1. python scripts/scrape-ouedkniss-local.py
+#    2. python scripts/merge-ouedkniss.py
+#    3. node scripts/convert-data-enhanced.js
+#    4. git add public/clean-products.json public/data/products.json
+#    5. git commit -m "data: update Ouedkniss products"
+#    6. git push  → Vercel auto-deploys
+#
+# ═══════════════════════════════════════════════════════════════════════════════
 
 on:
   schedule:
@@ -19,7 +58,7 @@ on:
 
 jobs:
   scrape:
-    name: Scrape + Convert Data
+    name: Scrape 8 Stores + Convert
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -47,14 +86,15 @@ jobs:
           pip install -r requirements.txt
 
       # ─── Run Scraper V2 (8 non-Ouedkniss stores) ───
-      # Ouedkniss is scraped locally and committed separately (GitHub Actions IPs blocked)
-      - name: Run Scraper V2
+      # NOTE: Ouedkniss is NOT scraped here — blocked by IP.
+      # Run scripts/scrape-ouedkniss-local.py on your machine instead.
+      - name: Run Scraper V2 (8 stores)
         run: cd scripts && python adapter_v2.py
         env:
           PYTHONIOENCODING: utf-8
 
       # ─── Convert data for frontend (with taxonomy) ───
-      - name: Convert data to DZ TechHunt format
+      - name: Convert to DZ TechHunt format
         run: node scripts/convert-data-enhanced.js
 
       # ─── Upload artifacts for debugging ───
@@ -80,7 +120,7 @@ jobs:
           else
             git commit -m "data: daily scrape $(date -u +%Y-%m-%d)"
             git push
-            echo "Data committed and pushed — Vercel auto-deploy will trigger"
+            echo "✅ Data committed — Vercel auto-deploy will trigger"
           fi
 
   cleanup:
