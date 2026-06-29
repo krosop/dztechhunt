@@ -98,6 +98,42 @@ def convert_to_frontend(cleaned_products):
     return products
 
 
+def load_ouedkniss_raw(path: Path) -> list:
+    """Load fresh Ouedkniss data from local scraper output."""
+    if not path.exists():
+        return []
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        products = data.get('products', [])
+        # Convert to scraper raw format (name -> title)
+        raw = []
+        for p in products:
+            try:
+                # Parse price string like "77,000 DA" -> 77000
+                price_str = p.get('price', '').replace(',', '').replace(' DA', '').strip()
+                price = int(price_str) if price_str else 0
+                old_price_str = (p.get('old_price') or '').replace(',', '').replace(' DA', '').strip()
+                old_price = int(old_price_str) if old_price_str else None
+                raw.append({
+                    'title': p.get('name', ''),
+                    'price': price,
+                    'old_price': old_price,
+                    'url': p.get('url', ''),
+                    'image': p.get('image', ''),
+                    'site': p.get('site', 'ouedkniss.com'),
+                    'retailer_name': p.get('retailer_name', 'Ouedkniss'),
+                    'sku': p.get('sku', ''),
+                })
+            except Exception:
+                continue
+        print(f"  [+] Loaded {len(raw)} fresh Ouedkniss products from local scraper")
+        return raw
+    except Exception as e:
+        print(f"  [!] Failed to load fresh Ouedkniss data: {e}")
+        return []
+
+
 def load_previous_ouedkniss(path: Path) -> list:
     """Load Ouedkniss products from existing clean-products.json."""
     if not path.exists():
@@ -146,18 +182,17 @@ def main():
     
     project_root = SCRAPER_DIR.parent.parent
     clean_products_path = project_root / 'public' / 'clean-products.json'
+    ouedkniss_raw_path = project_root / 'scripts' / 'ouedkniss-raw.json'
     
-    # ── 0. Load existing Ouedkniss data ──
-    print("\n[0/4] Loading existing Ouedkniss data...")
-    oued_products = load_previous_ouedkniss(clean_products_path)
+    # ── 0. Load fresh Ouedkniss data from local scraper ──
+    print("\n[0/4] Loading fresh Ouedkniss data...")
+    ouedkniss_raw = load_ouedkniss_raw(ouedkniss_raw_path)
     
     # ── 1. Scrape (8 non-Ouedkniss stores) ──
     print("\n[1/4] Running scraper for 8 non-Ouedkniss stores...")
     from run import scrape_site, SCRAPER_MAP
     
     raw_products = []
-    # Ouedkniss removed — it blocks GitHub Actions IPs
-    # Scrape Ouedkniss locally with: python scripts/scrape-ouedkniss-local.py
     sites = ['licbplus', 'gamingdz', 'geekzone', 'gigastore', 'lahlou', 'hardsoft', 'digitec', 'matos']
     
     for site in sites:
@@ -171,6 +206,12 @@ def main():
     
     print(f"\n[+] Total raw (non-Ouedkniss): {len(raw_products)} products")
     
+    # Add fresh Ouedkniss raw data
+    if ouedkniss_raw:
+        raw_products.extend(ouedkniss_raw)
+        print(f"[+] Added {len(ouedkniss_raw)} fresh Ouedkniss products")
+        print(f"[+] Total raw (all): {len(raw_products)} products")
+    
     # ── 2. Clean ──
     print("\n[2/4] Cleaning...")
     cleaned = clean_all(raw_products)
@@ -181,20 +222,9 @@ def main():
     frontend_products = convert_to_frontend(cleaned)
     print(f"[+] Frontend products: {len(frontend_products)}")
     
-    # ── 4. Merge existing Ouedkniss data ──
-    if oued_products:
-        print(f"\n[4/4] Merging Ouedkniss data...")
-        frontend_products = merge_ouedkniss(frontend_products, oued_products)
-        oued_count = sum(1 for p in frontend_products
-                         if any(is_ouedkniss(l.get('source', '')) for l in p.get('listings', [])))
-        print(f"[+] After merge: {oued_count} Ouedkniss products, {len(frontend_products)} total")
-    else:
-        print(f"\n[4/4] No Ouedkniss data to merge.")
-        print(f"  [i] To scrape Ouedkniss locally, run:")
-        print(f"      python scripts/scrape-ouedkniss-local.py")
-    
-    # ── 5. Save ──
-    print("\n[5/5] Saving output...")
+    # ── 4. Save ──
+    print("\n[4/4] Saving output...")
+    oued_count = sum(1 for p in frontend_products if any(is_ouedkniss(l.get('source', '')) for l in p.get('listings', [])))
     output = {
         'timestamp': datetime.now().isoformat(),
         'total': len(frontend_products),
@@ -202,7 +232,7 @@ def main():
             'originalCount': len(raw_products),
             'cleanCount': len(cleaned),
             'uniqueCount': len(frontend_products),
-            'ouedknissCount': sum(1 for p in frontend_products if any(is_ouedkniss(l.get('source', '')) for l in p.get('listings', []))),
+            'ouedknissCount': oued_count,
             'reductionRate': f"{((len(raw_products) - len(frontend_products)) / len(raw_products) * 100):.1f}%" if raw_products else "0%",
         },
         'products': frontend_products,
@@ -220,7 +250,7 @@ def main():
         print(f"  [+] {p}")
     
     print(f"\n{'=' * 60}")
-    print(f"  DONE: {len(frontend_products)} products")
+    print(f"  DONE: {len(frontend_products)} products ({oued_count} Ouedkniss)")
     print(f"{'=' * 60}\n")
 
 

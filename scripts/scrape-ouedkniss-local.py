@@ -20,40 +20,11 @@ import requests
 import time
 import random
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 GRAPHQL_URL = 'https://api.ouedkniss.com/graphql'
 BASE_URL = 'https://www.ouedkniss.com'
-
-SEARCH_QUERY = '''
-query SearchQuery($q: String, $filter: SearchFilterInput) {
-  search(q: $q, filter: $filter) {
-    announcements {
-      data {
-        id
-        title
-        slug
-        price
-        oldPrice
-        defaultMedia {
-          mediaUrl
-          thumbnail
-        }
-        store {
-          name
-        }
-        status
-      }
-      paginatorInfo {
-        lastPage
-        hasMorePages
-        total
-      }
-    }
-  }
-}
-'''
 
 STORES = {
     '1059': 'Admin Informatique',
@@ -74,22 +45,41 @@ STORES = {
 
 def fetch_page(session, category_slug, page=1, store_id=None, max_retries=3):
     """Fetch a page of announcements via GraphQL."""
-    time.sleep(random.uniform(1.5, 3))
+    time.sleep(random.uniform(0.3, 0.8))
     
-    filter_obj = {
-        'categorySlug': category_slug,
-        'page': page,
-        'orderByField': {'field': 'REFRESHED_AT'},
-        'count': 48,
-    }
+    filter_fields = f'categorySlug: "{category_slug}", page: {page}, orderByField: {{field: REFRESHED_AT}}, count: 48'
     if store_id:
-        filter_obj['storeId'] = store_id
+        filter_fields += f', storeId: "{store_id}"'
     
-    payload = {
-        'operationName': 'SearchQuery',
-        'variables': {'q': None, 'filter': filter_obj},
-        'query': SEARCH_QUERY,
-    }
+    query = f'''
+query {{
+  search(q: null, filter: {{{filter_fields}}}) {{
+    announcements {{
+      data {{
+        id
+        title
+        slug
+        price
+        oldPrice
+        defaultMedia {{
+          mediaUrl
+          thumbnail
+        }}
+        store {{
+          name
+        }}
+        status
+      }}
+      paginatorInfo {{
+        lastPage
+        hasMorePages
+        total
+      }}
+    }}
+  }}
+}}'''
+    
+    payload = {'query': query}
     
     for attempt in range(max_retries):
         try:
@@ -154,7 +144,7 @@ def parse_announcements(data):
                 'site': 'ouedkniss.com',
                 'retailer_name': retailer_name,
                 'sku': f"ouedkniss-{ann_id}",
-                'scraped_at': datetime.utcnow().isoformat(),
+                'scraped_at': datetime.now(timezone.utc).isoformat(),
             })
         except Exception:
             continue
@@ -217,7 +207,7 @@ def main():
     for store_id, store_name in STORES.items():
         products = scrape_store(session, store_id, store_name)
         all_products.extend(products)
-        time.sleep(random.uniform(3, 6))
+        time.sleep(random.uniform(1, 2))
     
     print(f"\n{'=' * 60}")
     print(f"  TOTAL: {len(all_products)} products")
