@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 
-const imageCache = new Map<string, string | null>();
 const pendingRequests = new Map<string, Promise<string | null>>();
 
 // SearchAPI.io key — free tier: 100 searches/month
