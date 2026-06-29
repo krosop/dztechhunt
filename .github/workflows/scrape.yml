@@ -7,7 +7,7 @@ on:
 
 jobs:
   scrape:
-    name: Scrape Algerian PC Stores
+    name: Scrape 8 Algerian Stores (Ouedkniss runs locally)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -17,7 +17,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # ─── Node.js Setup (for cleanup + existing scripts) ───
+      # ─── Node.js Setup ───
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -34,10 +34,10 @@ jobs:
         run: |
           cd scripts/pc-parts-scraper
           pip install -r requirements.txt
-          playwright install chromium
 
-      # ─── Run Scraper V2 via Adapter ───
-      - name: Run Scraper V2 (9 Algerian stores)
+      # ─── Run Scraper V2 (8 non-Ouedkniss stores) ───
+      # Ouedkniss is scraped locally and committed separately
+      - name: Run Scraper V2
         run: cd scripts && python adapter_v2.py
         env:
           PYTHONIOENCODING: utf-8
@@ -55,7 +55,6 @@ jobs:
           path: |
             public/clean-products.json
             public/data/products.json
-            scripts/pc-parts-scraper/data/raw/
           retention-days: 7
 
       # ─── Commit updated data ───

@@ -2,6 +2,13 @@
 """
 Adapter for new scraper V2 — converts cleaned output to frontend format.
 Does NOT require Supabase connection (just scrapes and saves JSON).
+
+NOTE: Ouedkniss is scraped locally (not from GitHub Actions) because
+Ouedkniss API blocks GitHub Actions runner IPs. Run the local scraper:
+
+    python scripts/scrape-ouedkniss-local.py
+
+Then run this adapter to merge everything together.
 """
 import json
 import os
@@ -91,8 +98,8 @@ def convert_to_frontend(cleaned_products):
     return products
 
 
-def load_previous_data(path: Path) -> list:
-    """Load Ouedkniss products from previous clean-products.json."""
+def load_previous_ouedkniss(path: Path) -> list:
+    """Load Ouedkniss products from existing clean-products.json."""
     if not path.exists():
         return []
     try:
@@ -104,15 +111,15 @@ def load_previous_data(path: Path) -> list:
             has_oued = any(is_ouedkniss(l.get('source', '')) for l in p.get('listings', []))
             if has_oued:
                 oued_products.append(p)
-        print(f"  [i] Loaded {len(oued_products)} old Ouedkniss products from {path}")
+        print(f"  [i] Loaded {len(oued_products)} Ouedkniss products from existing data")
         return oued_products
     except Exception as e:
-        print(f"  [!] Failed to load previous data: {e}")
+        print(f"  [!] Failed to load previous Ouedkniss data: {e}")
         return []
 
 
-def merge_ouedkniss(new_products: list, old_products: list) -> list:
-    """Merge old Ouedkniss products into new products. Only add products that don't exist."""
+def merge_ouedkniss(new_products: list, oued_products: list) -> list:
+    """Merge Ouedkniss products into new products. Only add products that don't exist."""
     # Build set of existing product names (canonicalized)
     existing_names = set()
     for p in new_products:
@@ -120,58 +127,49 @@ def merge_ouedkniss(new_products: list, old_products: list) -> list:
     
     merged = list(new_products)
     added = 0
-    for p in old_products:
+    for p in oued_products:
         name = p.get('name', '').strip().lower()
         if name and name not in existing_names:
             merged.append(p)
             added += 1
     
     if added > 0:
-        print(f"  [+] Merged {added} old Ouedkniss products that were missing from new scrape")
+        print(f"  [+] Merged {added} Ouedkniss products")
     return merged
 
 
 def main():
     print("=" * 60)
     print("  DEAL FINDER DZ — Scraper V2 Adapter")
+    print("  (Ouedkniss is scraped locally, not from GitHub Actions)")
     print("=" * 60)
     
     project_root = SCRAPER_DIR.parent.parent
     clean_products_path = project_root / 'public' / 'clean-products.json'
     
-    # ── 0. Save old data before scraping ──
-    print("\n[0/4] Loading previous data for fallback...")
-    old_oued_products = load_previous_data(clean_products_path)
+    # ── 0. Load existing Ouedkniss data ──
+    print("\n[0/4] Loading existing Ouedkniss data...")
+    oued_products = load_previous_ouedkniss(clean_products_path)
     
-    # ── 1. Scrape ──
-    print("\n[1/4] Running new scraper V2...")
+    # ── 1. Scrape (8 non-Ouedkniss stores) ──
+    print("\n[1/4] Running scraper for 8 non-Ouedkniss stores...")
     from run import scrape_site, SCRAPER_MAP
-    from sites.ouedkniss import OUEDKNISS_STORES
     
     raw_products = []
-    sites = ['licbplus', 'gamingdz', 'geekzone', 'gigastore', 'lahlou', 'hardsoft', 'digitec', 'matos', 'ouedkniss']
+    # Ouedkniss removed — it blocks GitHub Actions IPs
+    # Scrape Ouedkniss locally with: python scripts/scrape-ouedkniss-local.py
+    sites = ['licbplus', 'gamingdz', 'geekzone', 'gigastore', 'lahlou', 'hardsoft', 'digitec', 'matos']
     
     for site in sites:
         try:
             print(f"  Scraping {site}...")
-            if site == 'ouedkniss':
-                # Long delay before Ouedkniss to avoid rate limiting after other sites
-                print("  [i] Cooling down before Ouedkniss...")
-                import time
-                time.sleep(10)
-                products = scrape_site(site, stores=OUEDKNISS_STORES)
-            else:
-                products = scrape_site(site)
+            products = scrape_site(site)
             raw_products.extend(products)
             print(f"  [+] {site}: {len(products)} products")
         except Exception as e:
             print(f"  [!] {site} failed: {e}")
     
-    print(f"\n[+] Total raw: {len(raw_products)} products")
-    
-    # Count Ouedkniss raw products
-    oued_raw_count = sum(1 for p in raw_products if p.get('site') == 'ouedkniss.com')
-    print(f"[+] Ouedkniss raw products: {oued_raw_count}")
+    print(f"\n[+] Total raw (non-Ouedkniss): {len(raw_products)} products")
     
     # ── 2. Clean ──
     print("\n[2/4] Cleaning...")
@@ -183,21 +181,20 @@ def main():
     frontend_products = convert_to_frontend(cleaned)
     print(f"[+] Frontend products: {len(frontend_products)}")
     
-    # Count Ouedkniss in new data
-    new_oued_count = sum(1 for p in frontend_products
+    # ── 4. Merge existing Ouedkniss data ──
+    if oued_products:
+        print(f"\n[4/4] Merging Ouedkniss data...")
+        frontend_products = merge_ouedkniss(frontend_products, oued_products)
+        oued_count = sum(1 for p in frontend_products
                          if any(is_ouedkniss(l.get('source', '')) for l in p.get('listings', [])))
-    print(f"[+] New Ouedkniss products: {new_oued_count}")
-    
-    # ── 4. Merge old Ouedkniss data if new scrape is insufficient ──
-    if old_oued_products and new_oued_count < 200:
-        print(f"\n[!] Ouedkniss count low ({new_oued_count}). Merging old data...")
-        frontend_products = merge_ouedkniss(frontend_products, old_oued_products)
-        merged_oued_count = sum(1 for p in frontend_products
-                                  if any(is_ouedkniss(l.get('source', '')) for l in p.get('listings', [])))
-        print(f"[+] After merge: {merged_oued_count} Ouedkniss products, {len(frontend_products)} total")
+        print(f"[+] After merge: {oued_count} Ouedkniss products, {len(frontend_products)} total")
+    else:
+        print(f"\n[4/4] No Ouedkniss data to merge.")
+        print(f"  [i] To scrape Ouedkniss locally, run:")
+        print(f"      python scripts/scrape-ouedkniss-local.py")
     
     # ── 5. Save ──
-    print("\n[4/4] Saving output...")
+    print("\n[5/5] Saving output...")
     output = {
         'timestamp': datetime.now().isoformat(),
         'total': len(frontend_products),
@@ -205,6 +202,7 @@ def main():
             'originalCount': len(raw_products),
             'cleanCount': len(cleaned),
             'uniqueCount': len(frontend_products),
+            'ouedknissCount': sum(1 for p in frontend_products if any(is_ouedkniss(l.get('source', '')) for l in p.get('listings', []))),
             'reductionRate': f"{((len(raw_products) - len(frontend_products)) / len(raw_products) * 100):.1f}%" if raw_products else "0%",
         },
         'products': frontend_products,
