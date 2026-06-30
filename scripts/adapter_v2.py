@@ -218,9 +218,32 @@ def main():
         except Exception as e:
             print(f"  [!] Could not load existing: {e}")
     
-    # ── 2. Skip remote scrapers (unreliable / timeout-prone) ──
-    print("\n[2/4] Skipping remote scrapers (unreliable / timeout-prone)")
+    # ── 2. Scrape working remote stores ──
+    print("\n[2/4] Scraping working remote stores...")
+    from run import scrape_site
+    
     raw_products = []
+    # Working remote scrapers (requests + BeautifulSoup)
+    # Removed: wifidjelfa, gamingdz (browser-based, hang without real browser)
+    sites = ['licbplus', 'geekzone', 'gigastore', 'lahlou', 'digitec', 'tiza', 'hardsoft', 'matos']
+    
+    # Sitemap-based scrapers need more time
+    TIMEOUTS = {
+        'gigastore': 300,
+        'digitec': 400,
+        'tiza': 400,
+        'default': 120,
+    }
+    
+    for site in sites:
+        try:
+            print(f"  Scraping {site}...")
+            timeout = TIMEOUTS.get(site, TIMEOUTS['default'])
+            products = scrape_site(site, timeout=timeout)
+            raw_products.extend(products)
+            print(f"  [+] {site}: {len(products)} products")
+        except Exception as e:
+            print(f"  [!] {site} failed: {e}")
     
     # Add fresh Ouedkniss raw data
     if ouedkniss_raw:

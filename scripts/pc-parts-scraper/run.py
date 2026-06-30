@@ -58,7 +58,7 @@ def _scrape(site_name: str, categories: list = None, stores: dict = None) -> lis
     return scraper.scrape_all(categories=categories)
 
 
-def scrape_site(site_name: str, categories: list = None, stores: dict = None, timeout: int = 30) -> list:
+def scrape_site(site_name: str, categories: list = None, stores: dict = None, timeout: int = 120) -> list:
     """Run a scraper with timeout and return raw products."""
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
