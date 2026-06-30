@@ -53,7 +53,19 @@ export async function loadData() {
 
 async function fetchFresh() {
   try {
-    const res = await fetch('/data/products.json', { cache: 'no-cache' });
+    const { detectHeadlessBrowser, generateFetchToken } = await import('@/utils/botDetector');
+    if (detectHeadlessBrowser()) {
+      console.warn('Bot detected: blocking data load');
+      return null;
+    }
+    const token = generateFetchToken();
+    const res = await fetch('/data/products.json', {
+      cache: 'no-cache',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-Data-Token': token,
+      },
+    });
     if (!res.ok) return null;
     const json = await res.json();
     return json as typeof _data;

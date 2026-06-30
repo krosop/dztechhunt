@@ -1,12 +1,52 @@
 User-agent: *
 Allow: /
-Allow: /data/
-Allow: /images/
+Disallow: /data/
 Disallow: /videos/
 Disallow: /*.json
 Disallow: /src/
+Disallow: /api/
+
+# Block known scrapers explicitly
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: Rogerbot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: SeznamBot
+Disallow: /
+
+User-agent: MauiBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: Sogou
+Disallow: /
+
+User-agent: Exabot
+Disallow: /
+
+User-agent: Gigabot
+Disallow: /
+
+User-agent: NaverBot
+Disallow: /
+
+User-agent: Yeti
+Disallow: /
 
 Sitemap: https://dztechhunt-v3.vercel.app/sitemap.xml
-
-# Crawl delay for rate limiting (optional)
-# Crawl-delay: 1

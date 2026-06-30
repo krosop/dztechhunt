@@ -55,7 +55,21 @@ export default function DataProvider({ children }: { children: React.ReactNode }
 
   const loadFromJson = useCallback(async () => {
     try {
-      const res = await fetch('/data/products.json');
+      // Bot detection: block headless browsers from loading data
+      const { detectHeadlessBrowser, generateFetchToken } = await import('@/utils/botDetector');
+      if (detectHeadlessBrowser()) {
+        console.warn('Bot detected: blocking data load');
+        setError('Access denied');
+        return false;
+      }
+
+      const token = generateFetchToken();
+      const res = await fetch('/data/products.json', {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-Data-Token': token,
+        },
+      });
       if (!res.ok) return false;
       const data = await res.json();
 
