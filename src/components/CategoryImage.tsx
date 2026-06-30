@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { proxiedImageUrl } from '@/hooks/useProductImage';
 
 interface CategoryImageProps {
   src: string;
