@@ -65,7 +65,7 @@ CATEGORY_PATTERNS = {
         (r'\b(unlocked|k\b|kf\b|f\b)(?:\s|$|\b)', 4),
     ],
     'gpu': [
-        (r'\brtc\s*\d{4}\s*(?:ti|super)?\b|\bgtx\s*\d{3,4}\b|\bgt\s*\d{3,4}\b', 10),
+        (r'\brtx\s*\d{4}\s*(?:ti|super)?\b|\bgtx\s*\d{3,4}\b|\bgt\s*\d{3,4}\b', 10),
         (r'\brx\s*\d{4}\s*(?:xt|xtx)?\b', 10),
         (r'\bgeforce\s+(?:rtx|gtx|gt)\b|\bradeon\s+rx\b', 9),
         (r'\bcarte\s+graphique\b|\bgraphics\s+card\b|\bvga\b|\bvideo\s+card\b', 8),

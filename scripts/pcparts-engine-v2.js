@@ -372,7 +372,7 @@ const PCPartsEngine = (function() {
         if (/\bgHz\b|\bghz\b.*\d+.*core/i.test(lower)) scores.cpu += 5;
 
         // GPU indicators
-        if (/\brtc\s*\d{4}|\brx\s*\d{4}|\bgeforce\b|\bradeon\b|\bgraphics card\b|\bcarte graphique\b|\bgraphics\b/.test(lower)) scores.gpu += 10;
+        if (/\brtx\s*\d{4}|\brx\s*\d{4}|\bgeforce\b|\bradeon\b|\bgraphics card\b|\bcarte graphique\b|\bgraphics\b/.test(lower)) scores.gpu += 10;
         if (/\b(vram|gddr6|gddr5|gddr6x)\b/.test(lower)) scores.gpu += 8;
         if (/\bgtx\s*\d{3,4}|\bgt\s*\d{3,4}/.test(lower)) scores.gpu += 10;
 
