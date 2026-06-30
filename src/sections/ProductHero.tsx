@@ -71,9 +71,6 @@ export default function ProductHero({ entries, product }: Props) {
                 <CategoryImage
                   src=""
                   category={product.category_slug}
-                  storeName={product.store_name}
-                  storeColor={product.store_color}
-                  productName={product.product_name}
                   className="w-full h-full"
                 />
               )}

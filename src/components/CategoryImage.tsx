@@ -1,34 +1,11 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { Monitor, Cpu, HardDrive, MemoryStick, Zap, Box, Fan, Gamepad2, Headphones, Keyboard, Mouse, Laptop, Disc } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import { proxiedImageUrl } from '@/hooks/useProductImage';
 
 interface CategoryImageProps {
   category: string;
-  storeName: string;
-  storeColor: string;
-  productName: string;
   src: string;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
-  priority?: boolean; // Preload this image
 }
-
-const CATEGORY_ICONS: Record<string, any> = {
-  'graphics-cards': Gamepad2,
-  'processors': Cpu,
-  'memory': MemoryStick,
-  'storage': HardDrive,
-  'monitors': Monitor,
-  'cases': Box,
-  'power-supplies': Zap,
-  'cooling': Fan,
-  'headset': Headphones,
-  'keyboard': Keyboard,
-  'mouse': Mouse,
-  'laptop': Laptop,
-  'pc-parts': Disc,
-  'default': Box,
-};
 
 const CATEGORY_COLORS: Record<string, string> = {
   'graphics-cards': '#00d4aa',
@@ -47,104 +24,46 @@ const CATEGORY_COLORS: Record<string, string> = {
   'default': '#374151',
 };
 
-const CATEGORY_BG: Record<string, string> = {
-  'graphics-cards': 'radial-gradient(circle at 30% 30%, rgba(0,212,170,0.08) 0%, transparent 60%)',
-  'processors': 'radial-gradient(circle at 30% 30%, rgba(0,180,216,0.08) 0%, transparent 60%)',
-  'memory': 'radial-gradient(circle at 30% 30%, rgba(255,107,107,0.08) 0%, transparent 60%)',
-  'storage': 'radial-gradient(circle at 30% 30%, rgba(255,217,61,0.08) 0%, transparent 60%)',
-  'monitors': 'radial-gradient(circle at 30% 30%, rgba(168,85,247,0.08) 0%, transparent 60%)',
-  'cases': 'radial-gradient(circle at 30% 30%, rgba(74,222,128,0.08) 0%, transparent 60%)',
-  'power-supplies': 'radial-gradient(circle at 30% 30%, rgba(249,115,22,0.08) 0%, transparent 60%)',
-  'cooling': 'radial-gradient(circle at 30% 30%, rgba(34,211,238,0.08) 0%, transparent 60%)',
-  'headset': 'radial-gradient(circle at 30% 30%, rgba(236,72,153,0.08) 0%, transparent 60%)',
-  'keyboard': 'radial-gradient(circle at 30% 30%, rgba(59,130,246,0.08) 0%, transparent 60%)',
-  'mouse': 'radial-gradient(circle at 30% 30%, rgba(20,184,166,0.08) 0%, transparent 60%)',
-  'laptop': 'radial-gradient(circle at 30% 30%, rgba(139,92,246,0.08) 0%, transparent 60%)',
-  'pc-parts': 'radial-gradient(circle at 30% 30%, rgba(107,114,128,0.08) 0%, transparent 60%)',
-  'default': 'radial-gradient(circle at 30% 30%, rgba(55,65,81,0.08) 0%, transparent 60%)',
-};
-
-export default function CategoryImage({ category, storeName, storeColor, productName, src, className, size = 'md', priority = false }: CategoryImageProps) {
-  const [error, setError] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+export default function CategoryImage({ category, src, className }: CategoryImageProps) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [retrying, setRetrying] = useState(false);
 
   const hasSrc = src && src.length > 10 && !src.includes('product-pc-case');
-
-  const catKey = CATEGORY_ICONS[category] ? category : 'default';
-  const Icon = CATEGORY_ICONS[catKey] || CATEGORY_ICONS.default;
-  const catColor = CATEGORY_COLORS[catKey] || CATEGORY_COLORS.default;
-  const bgGradient = CATEGORY_BG[catKey] || CATEGORY_BG.default;
+  const catColor = CATEGORY_COLORS[category] || CATEGORY_COLORS.default;
 
   const imgSrc = useMemo(() => {
     if (!hasSrc) return null;
     const proxied = proxiedImageUrl(src);
-    // If proxy fails, fall back to original URL
     return proxied || src;
   }, [src, hasSrc]);
 
-  const hasValidSrc = !!imgSrc;
-  const isPlaceholder = !hasValidSrc || error;
+  const fallbackSrc = useMemo(() => {
+    if (!hasSrc) return null;
+    // If proxy URL is being used, retry with original URL on failure
+    const proxied = proxiedImageUrl(src);
+    return proxied && proxied !== src ? src : null;
+  }, [src, hasSrc]);
 
-  // Reset states when src changes, with timeout fallback
+  // Reset loading state when src changes
   useEffect(() => {
-    setError(false);
-    setLoaded(false);
+    setImgLoaded(false);
+    setRetrying(false);
+  }, [src]);
 
-    // If image doesn't load in 4 seconds, show placeholder
-    if (hasValidSrc && !priority) {
-      timeoutRef.current = setTimeout(() => {
-        setError(true);
-      }, 4000);
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [src, hasValidSrc, priority]);
-
-  const iconSize = size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-16 h-16 sm:w-20 sm:h-20' : 'w-12 h-12 sm:w-16 sm:h-16';
-  const textSize = size === 'sm' ? 'text-[9px]' : 'text-[10px] sm:text-xs';
-
-  if (isPlaceholder) {
+  if (!imgSrc) {
     return (
-      <div
-        className={`${className} relative overflow-hidden`}
-        style={{ background: `linear-gradient(135deg, #0d131c 0%, #111821 100%)` }}
-      >
-        <div className="absolute inset-0 opacity-60" style={{ background: bgGradient }} />
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: `linear-gradient(${catColor} 1px, transparent 1px), linear-gradient(90deg, ${catColor} 1px, transparent 1px)`,
-          backgroundSize: '20px 20px',
+      <div className={`${className} bg-[#0d131c] relative overflow-hidden animate-pulse`}>
+        <div className="absolute inset-0" style={{
+          background: `linear-gradient(90deg, #0d131c 0%, #111821 50%, #0d131c 100%)`,
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.5s infinite',
         }} />
-
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-4">
-          <div
-            className="rounded-xl p-2.5 sm:p-3 mb-2 sm:mb-3 border border-[#1a2332]"
-            style={{ backgroundColor: `${catColor}10` }}
-          >
-            <Icon className={`${iconSize} opacity-30`} style={{ color: catColor }} />
-          </div>
-          
-          <span className={`${textSize} font-semibold uppercase tracking-[0.08em] opacity-40`} style={{ color: catColor }}>
-            {category.replace(/-/g, ' ')}
-          </span>
-          
-          <span className="text-[9px] sm:text-[10px] text-[#4a5568] mt-1 leading-tight text-center px-2 line-clamp-2">
-            {productName}
-          </span>
-        </div>
-
-        <div className="absolute bottom-2 left-2 right-2 flex justify-center">
-          <span
-            className="text-[9px] sm:text-[10px] font-semibold px-2.5 py-1 rounded-lg border border-[#1a2332] truncate max-w-full"
-            style={{ backgroundColor: `${storeColor}15`, color: storeColor, borderColor: `${storeColor}25` }}
-          >
-            {storeName}
-          </span>
-        </div>
+        <style>{`
+          @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+        `}</style>
       </div>
     );
   }
@@ -152,39 +71,36 @@ export default function CategoryImage({ category, storeName, storeColor, product
   return (
     <div className={`${className} bg-[#0d131c] relative overflow-hidden`}>
       <img
-        src={imgSrc || ''}
-        alt={productName}
+        src={retrying ? (fallbackSrc || imgSrc) : imgSrc}
+        alt={''}
         referrerPolicy="no-referrer"
-        className={`w-full h-full object-contain p-2 transition-opacity duration-500 ease-out ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        onLoad={() => {
-          setLoaded(true);
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-          }
-        }}
+        className={`w-full h-full object-contain p-2 transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setImgLoaded(true)}
         onError={() => {
-          setError(true);
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
+          if (!retrying && fallbackSrc) {
+            setRetrying(true);
+          } else {
+            // Both proxy and original failed — keep skeleton visible
+            setImgLoaded(false);
           }
         }}
-        loading={priority ? 'eager' : 'lazy'}
-        decoding={priority ? 'auto' : 'async'}
-        fetchPriority={priority ? 'high' : 'auto'}
+        loading="eager"
+        decoding="auto"
+        fetchPriority="high"
       />
-      {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="rounded-xl p-3 border border-[#1a2332]" style={{ backgroundColor: `${catColor}08` }}>
-            <Icon className="w-10 h-10 sm:w-14 sm:h-14 opacity-20 animate-pulse" style={{ color: catColor }} />
-          </div>
+      {!imgLoaded && (
+        <div className="absolute inset-0" style={{
+          background: `linear-gradient(90deg, #0d131c 0%, #111821 50%, #0d131c 100%)`,
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.5s infinite',
+        }}>
+          <style>{`
+            @keyframes shimmer {
+              0% { background-position: -200% 0; }
+              100% { background-position: 200% 0; }
+            }
+          `}</style>
         </div>
-      )}
-      {loaded && (
-        <div className="absolute inset-0 pointer-events-none" style={{
-          boxShadow: 'inset 0 0 30px 10px rgba(13,19,28,0.3)',
-        }} />
       )}
     </div>
   );
