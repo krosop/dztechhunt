@@ -233,3 +233,12 @@ export default function DataProvider({ children }: { children: React.ReactNode }
     </DataContext.Provider>
   );
 }
+
+// Debug logging
+export function DataProviderDebug() {
+  const { loaded, loading, error, allProducts, productCount } = useData();
+  useEffect(() => {
+    console.log('DataProvider state:', { loaded, loading, error, allProductsCount: allProducts.length, productCount });
+  }, [loaded, loading, error, allProducts, productCount]);
+  return null;
+}
