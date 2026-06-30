@@ -5,7 +5,7 @@ import { useTranslation } from '@/i18n/useTranslation';
 import type { PriceView } from '@/supabase/types';
 import StarRating from './StarRating';
 import CategoryImage from './CategoryImage';
-import { useProductImage } from '@/hooks/useProductImage';
+import { proxiedImageUrl } from '@/hooks/useProductImage';
 import { highlightMatches, type HighlightSegment } from '@/utils/smartSearch';
 
 interface ProductCardProps {
@@ -44,7 +44,8 @@ function HighlightedTitle({ segments }: { segments: HighlightSegment[] }) {
 
 export default function ProductCard({ product, index = 0, query, animate = true }: ProductCardProps) {
   const { t } = useTranslation();
-  const { imageUrl } = useProductImage(product.product_name, product.product_image);
+  // Use proxied image directly — no async hook, no delay
+  const imageUrl = proxiedImageUrl(product.product_image || '') || product.product_image || '';
   
   const savingsPercent = product.original_price > 0
     ? Math.round((product.savings / product.original_price) * 100)
@@ -71,7 +72,7 @@ export default function ProductCard({ product, index = 0, query, animate = true 
       >
         <div className="h-44 sm:h-56 bg-[#0d131c] rounded-lg overflow-hidden mb-3 sm:mb-5">
           <CategoryImage
-            src={imageUrl || ''}
+            src={imageUrl}
             className="w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
           />
         </div>

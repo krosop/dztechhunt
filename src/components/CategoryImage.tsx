@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { proxiedImageUrl } from '@/hooks/useProductImage';
 
 interface CategoryImageProps {
@@ -7,82 +7,49 @@ interface CategoryImageProps {
 }
 
 export default function CategoryImage({ src, className }: CategoryImageProps) {
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [retrying, setRetrying] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
 
-  const hasSrc = src && src.length > 10 && !src.includes('product-pc-case');
+  // Check if source is valid
+  const hasValidSrc = src && src.length > 10 && !src.includes('product-pc-case');
 
-  const imgSrc = useMemo(() => {
-    if (!hasSrc) return null;
-    const proxied = proxiedImageUrl(src);
-    return proxied || src;
-  }, [src, hasSrc]);
+  // Determine which URL to use
+  const imgSrc = useFallback ? (src || '') : (hasValidSrc ? src : null);
 
-  const fallbackSrc = useMemo(() => {
-    if (!hasSrc) return null;
-    // If proxy URL is being used, retry with original URL on failure
-    const proxied = proxiedImageUrl(src);
-    return proxied && proxied !== src ? src : null;
-  }, [src, hasSrc]);
+  const handleError = useCallback(() => {
+    if (!useFallback && hasValidSrc) {
+      // Try original URL without proxy
+      const original = src.includes('weserv.nl') ? null : src;
+      if (original) {
+        setUseFallback(true);
+        return;
+      }
+    }
+    setHasError(true);
+  }, [useFallback, hasValidSrc, src]);
 
-  // Reset loading state when src changes
-  useEffect(() => {
-    setImgLoaded(false);
-    setRetrying(false);
-  }, [src]);
-
-  if (!imgSrc) {
+  // No valid image → show skeleton placeholder
+  if (!imgSrc || hasError) {
     return (
-      <div className={`${className} bg-[#0d131c] relative overflow-hidden animate-pulse`}>
-        <div className="absolute inset-0" style={{
-          background: `linear-gradient(90deg, #0d131c 0%, #111821 50%, #0d131c 100%)`,
-          backgroundSize: '200% 100%',
-          animation: 'shimmer 1.5s infinite',
-        }} />
-        <style>{`
-          @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-          }
-        `}</style>
+      <div className={`${className} bg-[#0d131c] relative overflow-hidden`}>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d131c] via-[#111821] to-[#0d131c] animate-pulse" />
       </div>
     );
   }
 
+  // Show image immediately — no opacity transition, no delay
   return (
     <div className={`${className} bg-[#0d131c] relative overflow-hidden`}>
       <img
-        src={retrying ? (fallbackSrc || imgSrc) : imgSrc}
-        alt={''}
+        src={imgSrc}
+        alt=""
         referrerPolicy="no-referrer"
-        className={`w-full h-full object-contain p-2 transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-        onLoad={() => setImgLoaded(true)}
-        onError={() => {
-          if (!retrying && fallbackSrc) {
-            setRetrying(true);
-          } else {
-            // Both proxy and original failed — keep skeleton visible
-            setImgLoaded(false);
-          }
-        }}
+        className="w-full h-full object-contain p-2"
+        onError={handleError}
         loading="eager"
-        decoding="auto"
+        decoding="sync"
         fetchPriority="high"
       />
-      {!imgLoaded && (
-        <div className="absolute inset-0" style={{
-          background: `linear-gradient(90deg, #0d131c 0%, #111821 50%, #0d131c 100%)`,
-          backgroundSize: '200% 100%',
-          animation: 'shimmer 1.5s infinite',
-        }}>
-          <style>{`
-            @keyframes shimmer {
-              0% { background-position: -200% 0; }
-              100% { background-position: 200% 0; }
-            }
-          `}</style>
-        </div>
-      )}
     </div>
   );
 }
