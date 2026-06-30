@@ -70,7 +70,6 @@ export default function ProductHero({ entries, product }: Props) {
               ) : (
                 <CategoryImage
                   src=""
-                  category={product.category_slug}
                   className="w-full h-full"
                 />
               )}

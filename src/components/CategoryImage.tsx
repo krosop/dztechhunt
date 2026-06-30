@@ -1,35 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { proxiedImageUrl } from '@/hooks/useProductImage';
 
 interface CategoryImageProps {
-  category: string;
   src: string;
   className?: string;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  'graphics-cards': '#00d4aa',
-  'processors': '#00b4d8',
-  'memory': '#ff6b6b',
-  'storage': '#ffd93d',
-  'monitors': '#a855f7',
-  'cases': '#4ade80',
-  'power-supplies': '#f97316',
-  'cooling': '#22d3ee',
-  'headset': '#ec4899',
-  'keyboard': '#3b82f6',
-  'mouse': '#14b8a6',
-  'laptop': '#8b5cf6',
-  'pc-parts': '#6b7280',
-  'default': '#374151',
-};
-
-export default function CategoryImage({ category, src, className }: CategoryImageProps) {
+export default function CategoryImage({ src, className }: CategoryImageProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [retrying, setRetrying] = useState(false);
 
   const hasSrc = src && src.length > 10 && !src.includes('product-pc-case');
-  const catColor = CATEGORY_COLORS[category] || CATEGORY_COLORS.default;
 
   const imgSrc = useMemo(() => {
     if (!hasSrc) return null;

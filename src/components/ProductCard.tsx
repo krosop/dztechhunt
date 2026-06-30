@@ -72,7 +72,6 @@ export default function ProductCard({ product, index = 0, query, animate = true 
         <div className="h-44 sm:h-56 bg-[#0d131c] rounded-lg overflow-hidden mb-3 sm:mb-5">
           <CategoryImage
             src={imageUrl || ''}
-            category={product.category_slug}
             className="w-full h-full group-hover:scale-105 transition-transform duration-500 ease-out"
           />
         </div>
