@@ -158,6 +158,17 @@ CATEGORY_PATTERNS = {
     'desktop': [
         (r'\bpc\s+(?:fixe|bureau|gamer|gaming|complet)\b|\bdesktop\b|\bordinateur\s+de\s+bureau\b', 10),
         (r'\bpc\s+assembl[eé]\b|\bunit[eé]\s+centrale\b', 8),
+        (r'\b(?:b\d{3}[a-z]?|z\d{3}[a-z]?|x\d{3}[a-z]?|h\d{3}[a-z]?)\b', 12),  # Desktop motherboard alone (strong signal)
+        (r'\b(?:b\d{3}[a-z]?|z\d{3}[a-z]?|x\d{3}[a-z]?|h\d{3}[a-z]?)\b.*\b(?:wifi|gaming|plus|pro|prime|aorus|tuf|rog)\b', 8),  # Motherboard + keyword after
+        (r'\b(?:wifi|gaming|plus|pro|prime|aorus|tuf|rog)\b.*\b(?:b\d{3}[a-z]?|z\d{3}[a-z]?|x\d{3}[a-z]?|h\d{3}[a-z]?)\b', 8),  # Keyword before + motherboard after
+        (r'\b(?:ryzen|core\s+i)\b.*\b(?:rtx|gtx|rx)\b', 8),  # Desktop PC with CPU + GPU
+    ],
+    'motherboard': [
+        (r'\bcarte\s+m[eè]re\b|\bmotherboard\b|\bmainboard\b', 10),
+        (r'\b(?:z\d{3}|b\d{3}|x\d{3}|h\d{3}|a\d{3})\b', 5),
+        (r'\b(?:asus|msi|gigabyte|asrock|biostar)\s+(?:prime|tuf|rog|pro|aorus|gaming)\b', 6),
+        (r'\b(socket\s+(?:am[45]|lga\d+)|am[45]|lga\d+)\b', 5),
+        (r'\bddr[45]\b.*\bcarte\s+m[eè]re\b|\bcarte\s+m[eè]re\b.*\bddr[45]\b', 6),
     ],
 }
 
@@ -493,8 +504,18 @@ def detect_category(name: str, url: str = '') -> str:
         has_laptop_indicator = bool(re.search(r'\blaptop\b|\bnotebook\b|\bpc\s+portable\b|\bordinateur\s+portable\b|\b(?:g15|g16|g18|g14|g17|g513|g733)\b', lower_name))
         has_gpu_variant = bool(re.search(r'\b(?:dual|tuf|strix|gaming|eagle|ventus|aero|suprim|windforce|shadow|inspire|astral|prime|phantom|gamingtrio|gaming\s+x|master|xtreme|aorus|ftw3|xc|ultra|founder|ko|phoenix|hof|amp|gaming\s+oc|windforce\s+oc|eagle\s+oc)\b', lower_name))
         has_standalone_gpu = bool(re.search(r'\bcarte\s+graphique\b|\bgraphics\s+card\b|\bvga\b|\bvideo\s+card\b', lower_name))
-        if not has_laptop_indicator and (has_gpu_variant or has_standalone_gpu):
-            scores['laptop'] = 0  # This is a GPU, not a laptop
+        has_motherboard = bool(re.search(r'\b(?:b\d{3}[a-z]?|z\d{3}[a-z]?|x\d{3}[a-z]?|h\d{3}[a-z]?)\b', lower_name))
+        if not has_laptop_indicator and not has_motherboard and (has_gpu_variant or has_standalone_gpu):
+            scores['laptop'] = 0  # This is a GPU, not a laptop or desktop PC
+    
+    # NEW: Desktop PC override - if product has a motherboard model and no laptop keyword, it's a desktop
+    if scores.get('laptop', 0) > 0:
+        has_laptop_indicator = bool(re.search(r'\blaptop\b|\bnotebook\b|\bpc\s+portable\b|\bordinateur\s+portable\b|\b(?:g15|g16|g18|g14|g17|g513|g733|thinkpad|ideapad|pavilion|omen|victus|nitro|predator|zephyrus|flow|vivobook|zenbook|envy|spectre|xps|alienware|latitude|inspiron|chromebook|yoga|swift|aspire|macbook|surface|legion|loq|tuf\s+a|tuf\s+g|rog\s+strix|rog\s+zephyrus|blade|stealth|proart)\b', lower_name))
+        has_motherboard = bool(re.search(r'\b(?:b\d{3}[a-z]?|z\d{3}[a-z]?|x\d{3}[a-z]?|h\d{3}[a-z]?)\b', lower_name))
+        has_screen = bool(re.search(r'\b(?:15\.6|14|13\.3|17\.3|16|17|18)\s*(?:["\']|pouces?|inch)?\b', lower_name))
+        if not has_laptop_indicator and has_motherboard and not has_screen:
+            scores['laptop'] = 0  # Desktop PC with motherboard, not a laptop
+            scores['desktop'] = scores.get('desktop', 0) + 50  # Strong boost to ensure desktop wins over storage
     
     # Additional safety: if laptop score is low and gpu score is high, trust GPU
     if scores.get('laptop', 0) > 0 and scores.get('laptop', 0) < 15 and scores.get('gpu', 0) >= 10:
