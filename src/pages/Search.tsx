@@ -31,12 +31,14 @@ const SEARCH_HINTS: Record<string, string[]> = {
 // ---------------------------------------------------------------------------
 function NoResultsSuggestions({
   query,
+  onSearch,
   allProducts,
   activeCategory,
   t,
   isRTL,
 }: {
   query: string;
+  onSearch: (q: string) => void;
   allProducts: PriceView[];
   activeCategory: string;
   t: any;
@@ -121,7 +123,7 @@ function NoResultsSuggestions({
           {categorySuggestions.map((cat) => (
             <button
               key={cat.slug}
-              onClick={() => onCorrect(cat.name)}
+              onClick={() => onSearch(cat.name)}
               className="px-4 py-2.5 bg-[#131b26] border border-[#1a2332] text-[#c8d0d9] text-sm font-medium rounded-xl hover:border-[#00d4aa]/30 hover:text-[#00d4aa] transition-all"
             >
               {cat.name}
@@ -140,7 +142,7 @@ function NoResultsSuggestions({
           {trendingSearches.map((term) => (
             <button
               key={term}
-              onClick={() => onCorrect(term)}
+              onClick={() => onSearch(term)}
               className="px-3 py-1.5 bg-[#0d131c] border border-[#1a2332] text-[#7a8a9e] text-[12px] font-medium rounded-lg hover:border-[#2a3545] hover:text-[#c8d0d9] transition-all"
             >
               {term}
@@ -279,6 +281,13 @@ export default function SearchPage() {
     setQuery('');
     setPage(1);
     setSearchParams({});
+  };
+
+  const searchFor = (q: string) => {
+    setInputValue(q);
+    setQuery(q);
+    setPage(1);
+    setSearchParams({ q });
   };
 
   const formatPriceFilter = (pf: PriceFilter | null): string | null => {
@@ -550,6 +559,7 @@ export default function SearchPage() {
           ) : isEmpty ? (
             <NoResultsSuggestions
               query={query}
+              onSearch={searchFor}
               allProducts={allProducts}
               activeCategory={activeCategory}
               t={t}
