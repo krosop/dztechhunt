@@ -78,7 +78,7 @@ export default function BrowsePage() {
         // 2-in-1 / convertible / touch
         if (n.includes('2 in 1') || n.includes('x360') || n.includes('tactile') || n.includes('convertible')) return true;
         // Laptop spec combo: has CPU name + GPU + screen size indicator
-        if ((n.includes('intel') || n.includes('ryzen') || n.includes('core i')) && (n.includes('rtx') || n.includes('gtx') || n.includes('radeon')) && (n.includes('pouce') || n.includes('fullhd') || n.includes('qhd') || n.includes('ips'))) return true;
+        if ((n.includes('intel') || n.includes('ryzen') || n.includes('core i') || n.includes('amd')) && (n.includes('rtx') || n.includes('gtx') || n.includes('radeon') || n.includes('geforce')) && (n.includes('pouce') || n.includes('fullhd') || n.includes('fhd') || n.includes('qhd') || n.includes('ips') || n.includes('2k') || n.includes('4k'))) return true;
         return false;
       };
       return products.filter((p) => {
@@ -86,7 +86,7 @@ export default function BrowsePage() {
         switch (catSlug) {
           case 'graphics-cards':
             if (isLaptop(name)) return false;
-            if (name.includes('gt302') || name.includes('forge') || name.includes('boitier') || name.includes('case') || name.includes('boîtier')) return false;
+            if (name.includes('gt302') || name.includes('gt502') || name.includes('forge') || name.includes('boitier') || name.includes('case') || name.includes('boîtier')) return false;
             if (!name.match(/rtx\s*\d{3,4}|gtx\s*\d{3,4}|rx\s*\d{3,4}|gt\s*\d{3,4}|quadro|radeon|arc\s*\w+/)) return false;
             return true;
           case 'processors':
