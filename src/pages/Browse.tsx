@@ -1,29 +1,41 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ArrowRight, PackageOpen, SlidersHorizontal, X } from 'lucide-react';
+import {
+  Search, ArrowRight, PackageOpen, SlidersHorizontal, X, LayoutGrid,
+  Monitor, HardDrive, Cpu, MemoryStick, Fan, Plug, Keyboard, Mouse, Headphones,
+  Box, Computer, CircuitBoard, Wrench, Laptop
+} from 'lucide-react';
 import { useData } from '@/components/DataProvider';
 import { useTranslation } from '@/i18n/useTranslation';
 import NavigationBar from '@/components/NavigationBar';
 import ProductCard from '@/components/ProductCard';
 import SEO from '@/components/SEO';
+import type { LucideIcon } from 'lucide-react';
 
-// Category display config with icons, labels, and sample images from data
-const CATEGORY_CONFIG: Record<string, { label: string; labelFr: string; emoji: string; color: string; }> = {
-  laptop: { label: 'Laptops', labelFr: 'PC Portables', emoji: '💻', color: '#00d4aa' },
-  'graphics-cards': { label: 'Graphics Cards', labelFr: 'Cartes Graphiques', emoji: '🎮', color: '#3b82f6' },
-  processors: { label: 'Processors', labelFr: 'Processeurs', emoji: '🔲', color: '#6366f1' },
-  memory: { label: 'Memory', labelFr: 'Mémoire', emoji: '💾', color: '#8b5cf6' },
-  storage: { label: 'Storage', labelFr: 'Stockage', emoji: '💿', color: '#06b6d4' },
-  monitors: { label: 'Monitors', labelFr: 'Moniteurs', emoji: '🖥️', color: '#f59e0b' },
-  'power-supplies': { label: 'Power Supplies', labelFr: 'Alimentations', emoji: '⚡', color: '#ef4444' },
-  cooling: { label: 'Cooling', labelFr: 'Refroidissement', emoji: '❄️', color: '#0ea5e9' },
-  keyboard: { label: 'Keyboards', labelFr: 'Claviers', emoji: '⌨️', color: '#10b981' },
-  mouse: { label: 'Mice', labelFr: 'Souris', emoji: '🖱️', color: '#ec4899' },
-  headset: { label: 'Headsets', labelFr: 'Casques', emoji: '🎧', color: '#f97316' },
-  cases: { label: 'Cases', labelFr: 'Boîtiers', emoji: '🔲', color: '#64748b' },
-  desktop: { label: 'Desktops', labelFr: 'PC Fixes', emoji: '🖥️', color: '#14b8a6' },
-  'pc-parts': { label: 'PC Parts', labelFr: 'Pièces PC', emoji: '🔧', color: '#6b7280' },
+interface CategoryConfig {
+  label: string;
+  labelFr: string;
+  icon: LucideIcon;
+  color: string;
+  bgColor: string;
+}
+
+const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
+  laptop: { label: 'Laptops', labelFr: 'PC Portables', icon: Laptop, color: '#00d4aa', bgColor: '#00d4aa15' },
+  'graphics-cards': { label: 'Graphics Cards', labelFr: 'Cartes Graphiques', icon: CircuitBoard, color: '#3b82f6', bgColor: '#3b82f615' },
+  processors: { label: 'Processors', labelFr: 'Processeurs', icon: Cpu, color: '#6366f1', bgColor: '#6366f115' },
+  memory: { label: 'Memory', labelFr: 'Mémoire', icon: MemoryStick, color: '#8b5cf6', bgColor: '#8b5cf615' },
+  storage: { label: 'Storage', labelFr: 'Stockage', icon: HardDrive, color: '#06b6d4', bgColor: '#06b6d415' },
+  monitors: { label: 'Monitors', labelFr: 'Moniteurs', icon: Monitor, color: '#f59e0b', bgColor: '#f59e0b15' },
+  'power-supplies': { label: 'Power Supplies', labelFr: 'Alimentations', icon: Plug, color: '#ef4444', bgColor: '#ef444415' },
+  cooling: { label: 'Cooling', labelFr: 'Refroidissement', icon: Fan, color: '#0ea5e9', bgColor: '#0ea5e915' },
+  keyboard: { label: 'Keyboards', labelFr: 'Claviers', icon: Keyboard, color: '#10b981', bgColor: '#10b98115' },
+  mouse: { label: 'Mice', labelFr: 'Souris', icon: Mouse, color: '#ec4899', bgColor: '#ec489915' },
+  headset: { label: 'Headsets', labelFr: 'Casques', icon: Headphones, color: '#f97316', bgColor: '#f9731615' },
+  cases: { label: 'Cases', labelFr: 'Boîtiers', icon: Box, color: '#64748b', bgColor: '#64748b15' },
+  desktop: { label: 'Desktops', labelFr: 'PC Fixes', icon: Computer, color: '#14b8a6', bgColor: '#14b8a615' },
+  'pc-parts': { label: 'PC Parts', labelFr: 'Pièces PC', icon: Wrench, color: '#6b7280', bgColor: '#6b728015' },
 };
 
 export default function BrowsePage() {
@@ -35,28 +47,45 @@ export default function BrowsePage() {
   const [sortBy, setSortBy] = useState<'relevance' | 'price-asc' | 'price-desc' | 'savings'>('relevance');
   const [showSort, setShowSort] = useState(false);
 
-  // Build category map with images from data
+  // Build category counts
   const categories = useMemo(() => {
-    const map = new Map<string, { slug: string; name: string; count: number; image: string | null }>();
+    const map = new Map<string, { slug: string; count: number }>();
     for (const p of allProducts) {
       const slug = p.category_slug;
       if (!map.has(slug)) {
-        map.set(slug, { slug, name: p.category_name_fr, count: 0, image: null });
+        map.set(slug, { slug, count: 0 });
       }
-      const entry = map.get(slug)!;
-      entry.count++;
-      if (!entry.image && p.product_image) {
-        entry.image = p.product_image;
-      }
+      map.get(slug)!.count++;
     }
     return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [allProducts]);
 
-  // Filter products by category + search
+  // Filter products — when "All" selected, show a MIXED selection from each category
   const filteredProducts = useMemo(() => {
-    let pool = activeCategory
-      ? allProducts.filter(p => p.category_slug === activeCategory)
-      : allProducts;
+    let pool: typeof allProducts;
+
+    if (activeCategory) {
+      pool = allProducts.filter(p => p.category_slug === activeCategory);
+    } else {
+      // "All" — pick top 3 products from each category for a mixed view
+      const categoryMap = new Map<string, typeof allProducts>();
+      for (const p of allProducts) {
+        if (!categoryMap.has(p.category_slug)) {
+          categoryMap.set(p.category_slug, []);
+        }
+        categoryMap.get(p.category_slug)!.push(p);
+      }
+      pool = [];
+      for (const [, products] of categoryMap) {
+        // Sort by listing count (most popular) and take top 3
+        const top = products
+          .sort((a, b) => b.product_review_count - a.product_review_count)
+          .slice(0, 3);
+        pool.push(...top);
+      }
+      // Shuffle the mixed pool
+      pool = pool.sort(() => Math.random() - 0.5);
+    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -70,7 +99,7 @@ export default function BrowsePage() {
       default: break;
     }
 
-    // Deduplicate by product_id
+    // Deduplicate
     const seen = new Set<string>();
     const deduped: typeof pool = [];
     for (const p of pool) {
@@ -91,8 +120,8 @@ export default function BrowsePage() {
 
   const sortLabels: Record<string, string> = {
     relevance: 'Relevance',
-    'price-asc': 'Price: Low to High',
-    'price-desc': 'Price: High to Low',
+    'price-asc': 'Price: Low → High',
+    'price-desc': 'Price: High → Low',
     savings: 'Best Deals',
   };
 
@@ -107,7 +136,7 @@ export default function BrowsePage() {
 
       <main className="pt-16">
         {/* Header */}
-        <section className="bg-[#070a10] border-b border-[#1a2332] py-8 sm:py-10">
+        <section className="bg-[#070a10] border-b border-[#1a2332] py-8 sm:py-12">
           <div className="page-padding">
             <div className={`flex items-center gap-1.5 text-[11px] text-[#4a5568] mb-5 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <Link to="/" className="hover:text-[#00d4aa] transition-colors">{t.breadcrumb_home}</Link>
@@ -123,8 +152,8 @@ export default function BrowsePage() {
               <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#00d4aa]">
                 Categories
               </span>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mt-2">Browse All PC Parts</h1>
-              <p className="mt-2 text-[13px] sm:text-[15px] text-[#5a6a7e] max-w-[600px]">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-2">Browse All PC Parts</h1>
+              <p className="mt-3 text-[14px] sm:text-[15px] text-[#5a6a7e] max-w-[600px] leading-relaxed">
                 Explore every category — from GPUs and CPUs to laptops and monitors. Compare prices across Algerian stores.
               </p>
             </motion.div>
@@ -135,7 +164,7 @@ export default function BrowsePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               onSubmit={handleSearch}
-              className="mt-6 max-w-[640px]"
+              className="mt-8 max-w-[640px]"
             >
               <div className="flex items-center bg-[#131b26] border border-[#1a2332] rounded-xl focus-within:border-[#00d4aa]/50 focus-within:ring-2 focus-within:ring-[#00d4aa]/10 transition-all">
                 <Search className="w-5 h-5 text-[#4a5568] mx-4 shrink-0" />
@@ -143,8 +172,8 @@ export default function BrowsePage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search within results..."
-                  className="flex-1 h-12 px-3 text-[15px] text-white placeholder:text-[#4a5568] bg-transparent outline-none"
+                  placeholder="Search products..."
+                  className="flex-1 h-14 px-3 text-[15px] text-white placeholder:text-[#4a5568] bg-transparent outline-none"
                   dir={isRTL ? 'rtl' : 'ltr'}
                 />
                 {searchQuery && (
@@ -152,7 +181,7 @@ export default function BrowsePage() {
                     <X className="w-4 h-4" />
                   </button>
                 )}
-                <button type="submit" className="h-9 mx-2 px-4 bg-[#00d4aa] hover:bg-[#00b894] text-[#0a0e14] text-sm font-bold rounded-lg transition-colors">
+                <button type="submit" className="h-10 mx-2 px-5 bg-[#00d4aa] hover:bg-[#00b894] text-[#0a0e14] text-sm font-bold rounded-lg transition-colors">
                   Search
                 </button>
               </div>
@@ -161,66 +190,61 @@ export default function BrowsePage() {
         </section>
 
         {/* Category Circles */}
-        <section className="page-padding py-8 sm:py-10">
+        <section className="page-padding py-10 sm:py-14">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
-            <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-[#00d4aa] mb-5">
-              Categories
-            </h2>
-            <div className="flex flex-wrap gap-4 sm:gap-5">
-              {/* All categories */}
+            <div className="flex items-center gap-2 mb-8">
+              <LayoutGrid className="w-4 h-4 text-[#00d4aa]" />
+              <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-[#00d4aa]">
+                Shop by Category
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-6 sm:gap-8">
+              {/* All */}
               <button
                 onClick={() => setActiveCategory(null)}
-                className={`group flex flex-col items-center gap-2 transition-all ${!activeCategory ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                className="group flex flex-col items-center gap-3 min-w-[80px]"
               >
-                <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-2xl sm:text-3xl border-2 transition-all ${
+                <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center transition-all duration-300 ${
                   !activeCategory
-                    ? 'bg-[#00d4aa]/20 border-[#00d4aa] shadow-lg shadow-[#00d4aa]/20'
-                    : 'bg-[#111821] border-[#1a2332] hover:border-[#00d4aa]/40'
+                    ? 'bg-[#00d4aa]/20 border-2 border-[#00d4aa] shadow-lg shadow-[#00d4aa]/20 scale-105'
+                    : 'bg-[#111821] border-2 border-[#1a2332] hover:border-[#00d4aa]/40 hover:bg-[#1a2332]'
                 }`}>
-                  📦
+                  <LayoutGrid className={`w-8 h-8 sm:w-10 sm:h-10 transition-colors ${!activeCategory ? 'text-[#00d4aa]' : 'text-[#5a6a7e] group-hover:text-[#00d4aa]'}`} />
                 </div>
-                <span className={`text-[11px] sm:text-xs font-medium ${!activeCategory ? 'text-[#00d4aa]' : 'text-[#5a6a7e]'}`}>
+                <span className={`text-[13px] font-semibold transition-colors ${!activeCategory ? 'text-[#00d4aa]' : 'text-[#5a6a7e] group-hover:text-white'}`}>
                   All
                 </span>
-                <span className="text-[10px] text-[#4a5568]">{allProducts.length.toLocaleString()}</span>
+                <span className="text-[11px] text-[#4a5568]">{allProducts.length.toLocaleString()}</span>
               </button>
 
               {categories.map((cat) => {
-                const config = CATEGORY_CONFIG[cat.slug] || { label: cat.slug, labelFr: cat.slug, emoji: '🔧', color: '#6b7280' };
+                const config = CATEGORY_CONFIG[cat.slug] || { label: cat.slug, labelFr: cat.slug, icon: Wrench, color: '#6b7280', bgColor: '#6b728015' };
                 const isActive = activeCategory === cat.slug;
+                const Icon = config.icon;
                 return (
                   <button
                     key={cat.slug}
                     onClick={() => setActiveCategory(isActive ? null : cat.slug)}
-                    className={`group flex flex-col items-center gap-2 transition-all ${isActive ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                    className="group flex flex-col items-center gap-3 min-w-[80px]"
                   >
-                    <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 transition-all ${
+                    <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center transition-all duration-300 ${
                       isActive
-                        ? 'border-[#00d4aa] shadow-lg shadow-[#00d4aa]/20'
-                        : 'border-[#1a2332] hover:border-[#00d4aa]/40'
-                    }`}>
-                      {cat.image ? (
-                        <img
-                          src={cat.image}
-                          alt={config.label}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          onError={(e) => { (e.target as HTMLImageElement).src = ''; (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="w-full h-full flex items-center justify-center text-xl bg-[#111821]">${config.emoji}</span>`; }}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xl bg-[#111821]">
-                          {config.emoji}
-                        </div>
-                      )}
+                        ? 'border-2 shadow-lg scale-105'
+                        : 'bg-[#111821] border-2 border-[#1a2332] hover:border-[#00d4aa]/40 hover:bg-[#1a2332]'
+                    }`}
+                    style={isActive ? { borderColor: config.color, backgroundColor: config.bgColor, boxShadow: `0 0 20px ${config.color}20` } : {}}
+                    >
+                      <Icon className="w-8 h-8 sm:w-10 sm:h-10 transition-colors" style={{ color: isActive ? config.color : '#5a6a7e' }} />
                     </div>
-                    <span className={`text-[11px] sm:text-xs font-medium ${isActive ? 'text-[#00d4aa]' : 'text-[#5a6a7e]'}`}>
+                    <span className={`text-[13px] font-semibold transition-colors ${isActive ? 'text-white' : 'text-[#5a6a7e] group-hover:text-white'}`}>
                       {config.labelFr}
                     </span>
-                    <span className="text-[10px] text-[#4a5568]">{cat.count.toLocaleString()}</span>
+                    <span className="text-[11px] text-[#4a5568]">{cat.count.toLocaleString()}</span>
                   </button>
                 );
               })}
@@ -229,18 +253,21 @@ export default function BrowsePage() {
         </section>
 
         {/* Results */}
-        <section className="page-padding py-8 sm:py-10">
-          <div className="flex items-center justify-between mb-5">
+        <section className="page-padding py-8 sm:py-10 border-t border-[#1a2332]">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <span className="text-xs text-[#5a6a7e]">
+              <span className="text-sm text-[#5a6a7e]">
                 {loading || !loaded ? (
                   'Loading...'
                 ) : (
                   <>
-                    <span className="text-[#00d4aa] font-semibold">{filteredProducts.length}</span>{' '}
-                    products
+                    <span className="text-[#00d4aa] font-bold text-lg">{filteredProducts.length}</span>
+                    <span className="ml-1">products</span>
                     {activeCategory && (
-                      <span className="text-[#4a5568]"> in {CATEGORY_CONFIG[activeCategory]?.labelFr || activeCategory}</span>
+                      <span className="text-[#4a5568] ml-1">in {CATEGORY_CONFIG[activeCategory]?.labelFr || activeCategory}</span>
+                    )}
+                    {!activeCategory && (
+                      <span className="text-[#4a5568] ml-1">— mixed from all categories</span>
                     )}
                   </>
                 )}
@@ -251,7 +278,7 @@ export default function BrowsePage() {
             <div className="relative">
               <button
                 onClick={() => setShowSort(!showSort)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-[#111821] border border-[#1a2332] rounded-lg text-[12px] text-[#5a6a7e] hover:text-white transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-[#111821] border border-[#1a2332] rounded-lg text-[13px] text-[#5a6a7e] hover:text-white transition-colors"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
                 {sortLabels[sortBy]}
@@ -262,13 +289,13 @@ export default function BrowsePage() {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="absolute right-0 mt-1 w-40 bg-[#111821] border border-[#1a2332] rounded-lg shadow-xl z-20 overflow-hidden"
+                    className="absolute right-0 mt-1 w-44 bg-[#111821] border border-[#1a2332] rounded-lg shadow-xl z-20 overflow-hidden"
                   >
                     {Object.entries(sortLabels).map(([key, label]) => (
                       <button
                         key={key}
                         onClick={() => { setSortBy(key as any); setShowSort(false); }}
-                        className={`w-full px-3 py-2 text-left text-[12px] transition-colors ${
+                        className={`w-full px-4 py-2.5 text-left text-[13px] transition-colors ${
                           sortBy === key ? 'text-[#00d4aa] bg-[#00d4aa]/10' : 'text-[#5a6a7e] hover:text-white hover:bg-[#1a2332]'
                         }`}
                       >
@@ -285,20 +312,20 @@ export default function BrowsePage() {
           {loading || !loaded ? (
             <div className="text-center py-12 text-[#5a6a7e]">Loading...</div>
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <PackageOpen className="w-12 h-12 text-[#1a2332] mx-auto mb-3" />
-              <p className="text-[#5a6a7e] text-sm">No products found</p>
+            <div className="text-center py-16">
+              <PackageOpen className="w-14 h-14 text-[#1a2332] mx-auto mb-4" />
+              <p className="text-[#5a6a7e] text-base">No products found</p>
               {activeCategory && (
                 <button
                   onClick={() => setActiveCategory(null)}
-                  className="mt-3 text-[#00d4aa] text-sm hover:underline"
+                  className="mt-4 text-[#00d4aa] text-sm font-semibold hover:underline"
                 >
                   Clear filter
                 </button>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5 sm:gap-6">
               {filteredProducts.slice(0, 40).map((product, i) => (
                 <motion.div
                   key={product.product_id}
@@ -313,7 +340,7 @@ export default function BrowsePage() {
           )}
 
           {filteredProducts.length > 40 && (
-            <div className="text-center mt-8">
+            <div className="text-center mt-10">
               <Link
                 to={activeCategory ? `/search?cat=${activeCategory}` : '/search'}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-[#111821] border border-[#1a2332] hover:border-[#00d4aa]/30 text-[#00d4aa] text-sm font-semibold rounded-xl transition-all"
