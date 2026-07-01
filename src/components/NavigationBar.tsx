@@ -29,6 +29,7 @@ export default function NavigationBar() {
   }, [mobileOpen]);
 
   const navLinks = [
+    { label: 'Browse', to: '/browse' },
     { label: t.nav_how, to: '/how-it-works' },
   ];
 

@@ -5,12 +5,15 @@ import Product from './pages/Product';
 import SearchPage from './pages/Search';
 import HowItWorksPage from './pages/HowItWorks';
 
+import BrowsePage from './pages/Browse';
+
 export default function App() {
   return (
     <DataProvider>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/browse" element={<BrowsePage />} />
         <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/product/:slug" element={<Product />} />
       </Routes>

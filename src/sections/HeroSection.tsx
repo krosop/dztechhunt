@@ -93,7 +93,7 @@ export default function HeroSection() {
 
         <motion.div variants={itemVariants} className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
           <Link
-            to="/search"
+            to="/browse"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#131b26] hover:bg-[#1a2332] border border-[#1a2332] hover:border-[#00d4aa]/30 text-[#c8d0d9] text-sm font-semibold rounded-lg transition-all duration-200"
             dir={isRTL ? 'rtl' : 'ltr'}
           >
