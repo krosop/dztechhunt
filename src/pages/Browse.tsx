@@ -66,18 +66,18 @@ export default function BrowsePage() {
 
     // Helper: filter incorrectly categorized products by category
     function filterByCategory(products: typeof allProducts, catSlug: string): typeof allProducts {
-      const LAPTOP_KEYWORDS = ['laptop', 'legion', 'zephyrus', 'omen', 'victus', 'nitro', 'predator', 'thinkpad', 'thinkbook', 'ideapad', 'pavilion', 'elitebook', 'probook', 'spectre', 'envy', 'dragonfly', 'folio', 'xps', 'inspiron', 'latitude', 'alienware', 'blade', 'razer', 'dynabook', 'omnibook', 'galaxy book', 'surface', 'convertible', 'chromebook', 'notebook', 'ultrabook', 'vivobook', 'zenbook', 'proart', 'expertbook', 'travelmate', 'aspire', 'swift', 'spin', 'flex', 'yoga', 'stream', 'revolve', 'zbook', 'mobile workstation', 'workstation mobile', 'station de travail mobile'];
       const isLaptop = (name: string) => {
         const n = name.toLowerCase();
-        // Direct keyword match
-        if (LAPTOP_KEYWORDS.some(k => n.includes(k))) return true;
-        // Screen size pattern (e.g., "14 Pouce", "15.6\"", "16 Pouce")
+        const laptopKeywords = ['laptop', 'legion', 'zephyrus', 'omen', 'victus', 'nitro', 'predator', 'thinkpad', 'thinkbook', 'ideapad', 'pavilion', 'elitebook', 'probook', 'spectre', 'envy', 'dragonfly', 'folio', 'xps', 'inspiron', 'latitude', 'alienware', 'blade', 'razer', 'dynabook', 'omnibook', 'galaxy book', 'surface', 'convertible', 'chromebook', 'notebook', 'ultrabook', 'vivobook', 'zenbook', 'proart', 'expertbook', 'travelmate', 'aspire', 'swift', 'spin', 'flex', 'yoga', 'stream', 'revolve', 'zbook', 'mobile workstation', 'workstation mobile', 'station de travail mobile', 'leopard', 'katana', 'stealth', 'vector', 'crosshair', 'pulse', 'bravo', 'alpha', 'titan', 'gf63', 'gf75', 'gf76', 'crosshair', 'tuf a15', 'tuf a16', 'tuf f17', 'tuf f15', 'tuf gaming'];
+        if (laptopKeywords.some(k => n.includes(k))) return true;
+        // Screen size + NOT a monitor/TV
         if (/\d{2}(\.\d)?\s*pouce/.test(n)) {
-          // If it has screen size AND is NOT a monitor or TV
-          if (!n.includes('monitor') && !n.includes('moniteur') && !n.includes('ecran') && !n.includes('écran') && !n.includes('display') && !n.includes('tv')) return true;
+          if (!n.includes('monitor') && !n.includes('moniteur') && !n.includes('ecran') && !n.includes('écran') && !n.includes('display')) return true;
         }
-        // 2-in-1 or convertible indicators
-        if (n.includes('2 in 1') || n.includes('x360') || n.includes('tactile')) return true;
+        // 2-in-1 / convertible / touch
+        if (n.includes('2 in 1') || n.includes('x360') || n.includes('tactile') || n.includes('convertible')) return true;
+        // Laptop spec combo: has CPU name + GPU + screen size indicator
+        if ((n.includes('intel') || n.includes('ryzen') || n.includes('core i')) && (n.includes('rtx') || n.includes('gtx') || n.includes('radeon')) && (n.includes('pouce') || n.includes('fullhd') || n.includes('qhd') || n.includes('ips'))) return true;
         return false;
       };
       return products.filter((p) => {
