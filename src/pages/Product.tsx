@@ -125,7 +125,7 @@ export default function Product() {
         title={`${product.product_name} — Price Comparison Algeria`}
         description={`Compare prices for ${product.product_name} in Algeria. Best price ${cheapest.current_price.toLocaleString()} DA from ${cheapest.store_name}.`}
         image={product.product_image || 'https://dztechhunt-v3.vercel.app/images/og-cover.jpg'}
-        url={`https://dztechhunt-v3.vercel.app/#/product/${slug}`}
+        url={`https://dztechhunt-v3.vercel.app/product/${slug}`}
         type="product"
         price={cheapest.current_price}
         brand={product.product_brand}

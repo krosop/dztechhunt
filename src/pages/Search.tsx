@@ -321,7 +321,7 @@ export default function SearchPage() {
         title={query ? `${t.search_results_for} ${query} — PC Parts Price Comparison` : `${t.search_title} — PC Parts Price Comparison`}
         description={query ? `Compare prices for ${query} in Algeria. Find the best deals on ${query} from top Algerian stores.` : 'Search and compare prices for graphics cards, CPUs, motherboards, RAM, SSDs, monitors & PC parts from top Algerian stores.'}
         keywords={query ? `${query} price Algeria, buy ${query} Algeria, ${query} Algeria` : 'Algeria PC parts search, graphics card price Algeria, CPU price Algeria'}
-        url={`https://dztechhunt-v3.vercel.app/#/search${query ? `?q=${encodeURIComponent(query)}` : ''}`}
+        url={`https://dztechhunt-v3.vercel.app/search${query ? `?q=${encodeURIComponent(query)}` : ''}`}
       />
       <NavigationBar />
 

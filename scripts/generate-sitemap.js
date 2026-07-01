@@ -8,17 +8,17 @@ const LAST_MOD = new Date().toISOString().split('T')[0];
 
 const staticRoutes = [
   { url: `${SITE_URL}/`, priority: 1.0, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search`, priority: 0.9, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=rtx+5060`, priority: 0.8, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=graphics+card`, priority: 0.8, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=cpu`, priority: 0.8, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=motherboard`, priority: 0.8, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=ram`, priority: 0.8, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=ssd`, priority: 0.8, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=monitor`, priority: 0.8, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=gaming+pc`, priority: 0.8, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=gaming+mouse`, priority: 0.8, changefreq: 'daily' },
-  { url: `${SITE_URL}/#/search?q=mechanical+keyboard`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search`, priority: 0.9, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=rtx+5060`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=graphics+card`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=cpu`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=motherboard`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=ram`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=ssd`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=monitor`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=gaming+pc`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=gaming+mouse`, priority: 0.8, changefreq: 'daily' },
+  { url: `${SITE_URL}/search?q=mechanical+keyboard`, priority: 0.8, changefreq: 'daily' },
 ];
 
 function generateSitemap() {
@@ -44,7 +44,7 @@ function generateSitemap() {
   for (const product of topProducts) {
     if (!product.slug) continue;
     xml += '  <url>\n';
-    xml += `    <loc>${SITE_URL}/#/product/${product.slug}</loc>\n`;
+    xml += `    <loc>${SITE_URL}/product/${product.slug}</loc>\n`;
     xml += `    <lastmod>${LAST_MOD}</lastmod>\n`;
     xml += '    <changefreq>daily</changefreq>\n';
     xml += '    <priority>0.7</priority>\n';

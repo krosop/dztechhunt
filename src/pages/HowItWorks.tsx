@@ -59,7 +59,7 @@ export default function HowItWorksPage() {
         title={`${t.page_hiw_title} — DZ TechHunt`}
         description={t.page_hiw_desc}
         keywords="how it works, PC price comparison Algeria, save on PC build, compare PC prices"
-        url="https://dztechhunt-v3.vercel.app/#/how-it-works"
+        url="https://dztechhunt-v3.vercel.app/how-it-works"
       />
       <NavigationBar />
 
